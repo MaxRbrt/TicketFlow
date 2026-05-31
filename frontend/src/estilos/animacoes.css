@@ -1,0 +1,139 @@
+/* ==========================================================================
+   TicketFlow - Animacoes
+   --------------------------------------------------------------------------
+   Todos os keyframes e classes utilitarias de movimento ficam aqui, num lugar
+   so. Movimento suave e discreto (180-300ms), respeitando quem prefere menos
+   animacao (regra no fim do arquivo).
+   ========================================================================== */
+
+/* ----- Keyframes ---------------------------------------------------------- */
+
+/* Entrada: surge de baixo com leve fade. */
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Entrada lateral (ex.: itens de menu). */
+@keyframes surgir-lado {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Giro continuo (spinners de carregamento). */
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Flutuacao lenta do blob de fundo (atmosfera.css). */
+@keyframes flutuar-blob {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(8vmax, 6vmax) scale(1.12);
+  }
+  100% {
+    transform: translate(2vmax, -4vmax) scale(1.04);
+  }
+}
+
+/* Pulso do selo urgente (chama atencao sem agredir). */
+@keyframes pulsar-urgente {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--cor-prioridade-urgente) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--cor-prioridade-urgente) 0%, transparent);
+  }
+}
+
+/* Pulso do pontinho "ao vivo" (pill de status do sistema). */
+@keyframes pulsar-ponto {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--cor-sucesso) 55%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--cor-sucesso) 0%, transparent);
+  }
+}
+
+/* Brilho de carregamento (skeleton). */
+@keyframes brilhar {
+  to {
+    background-position-x: -200%;
+  }
+}
+
+/* ----- Classes utilitarias de entrada ------------------------------------- */
+.animar-surgir {
+  animation: surgir var(--transicao-lenta) both;
+}
+
+.animar-surgir-lado {
+  animation: surgir-lado var(--transicao-lenta) both;
+}
+
+/* ----- Entrada em cascata (staggered) ------------------------------------- */
+/* Aplique .cascata num container: os filhos diretos entram em sequencia,    */
+/* criando o efeito de "abertura" do dashboard no carregamento.              */
+.cascata > * {
+  animation: surgir var(--transicao-lenta) both;
+}
+
+.cascata > *:nth-child(1) { animation-delay: 0.05s; }
+.cascata > *:nth-child(2) { animation-delay: 0.12s; }
+.cascata > *:nth-child(3) { animation-delay: 0.19s; }
+.cascata > *:nth-child(4) { animation-delay: 0.26s; }
+.cascata > *:nth-child(5) { animation-delay: 0.33s; }
+.cascata > *:nth-child(6) { animation-delay: 0.40s; }
+.cascata > *:nth-child(7) { animation-delay: 0.47s; }
+.cascata > *:nth-child(8) { animation-delay: 0.54s; }
+
+/* ----- Spinner ------------------------------------------------------------ */
+.girando {
+  animation: girar 0.8s linear infinite;
+}
+
+/* ----- Skeleton de carregamento ------------------------------------------- */
+.skeleton {
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.25) 25%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0.25) 75%
+  );
+  background-size: 200% 100%;
+  animation: brilhar 1.4s ease-in-out infinite;
+  border-radius: var(--raio-input);
+}
+
+/* ==========================================================================
+   ACESSIBILIDADE: respeita quem prefere menos movimento.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

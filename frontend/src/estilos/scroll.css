@@ -1,0 +1,75 @@
+/* ==========================================================================
+   TicketFlow - Rolagem (scroll)
+   --------------------------------------------------------------------------
+   Barra de rolagem discreta + revelacao de elementos ao rolar.
+
+   O scroll-reveal usa animacao nativa por timeline de viewport
+   (animation-timeline: view()), sem JavaScript. Em navegadores que nao
+   suportam, o conteudo simplesmente aparece normalmente (fallback seguro).
+   ========================================================================== */
+
+/* ----- Barra de rolagem --------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(111, 124, 142, 0.3);
+  border-radius: var(--raio-pill);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(111, 124, 142, 0.5);
+  background-clip: content-box;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(111, 124, 142, 0.35) transparent;
+}
+
+/* ----- Scroll-reveal ------------------------------------------------------ */
+/* Estado padrao: visivel (fallback caso o navegador nao suporte timelines). */
+.revelar {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes revelar-ao-rolar {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* So ativa o efeito onde animation-timeline e suportado. */
+@supports (animation-timeline: view()) {
+  .revelar {
+    opacity: 0;
+    animation: revelar-ao-rolar linear both;
+    animation-timeline: view();
+    /* Anima enquanto o elemento entra no viewport. */
+    animation-range: entry 0% entry 55%;
+  }
+}
+
+/* Respeita quem prefere menos movimento: mostra direto. */
+@media (prefers-reduced-motion: reduce) {
+  .revelar {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}

@@ -1,0 +1,219 @@
+/* ==========================================================================
+   TicketFlow - Componentes mobile
+   --------------------------------------------------------------------------
+   Ajustes compartilhados para os componentes reutilizaveis no celular:
+   paineis, botoes, campos, filtros, cards de chamado, detalhes e modais.
+   ========================================================================== */
+
+@media (max-width: 1100px) {
+  /* Textos longos nao podem forcar largura em janelas compactas. */
+  .titulo-hero,
+  .titulo-secao,
+  .titulo-card,
+  .texto-secundario {
+    overflow-wrap: anywhere;
+  }
+
+  /* Botoes com textos maiores passam a quebrar linha em vez de estourar. */
+  .botao {
+    min-height: var(--altura-botao);
+    height: auto;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  .badge,
+  .pill-info {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  /* ----- Superficies de vidro ------------------------------------------- */
+  .painel,
+  .cartao,
+  .cartao-destaque {
+    padding: var(--mobile-panel-padding);
+    border-radius: var(--raio-painel);
+  }
+
+  .elevavel:hover {
+    transform: none;
+  }
+
+  /* ----- Tipografia utilitaria ----------------------------------------- */
+  .titulo-hero,
+  .titulo-secao,
+  .titulo-card {
+    overflow-wrap: anywhere;
+  }
+
+  .rotulo-pequeno {
+    letter-spacing: 0.06em;
+  }
+
+  /* ----- Controles de formulario --------------------------------------- */
+  input,
+  select,
+  textarea {
+    /* Evita zoom automatico em iOS quando o campo recebe foco. */
+    font-size: 16px;
+  }
+
+  body .campo-caixa.campo-caixa,
+  body .seletor.seletor {
+    min-height: var(--altura-input);
+    height: auto;
+  }
+
+  body .campo-caixa.campo-caixa {
+    padding-inline: var(--espaco-md);
+  }
+
+  body .campo-input.campo-input,
+  body .seletor.seletor {
+    min-width: 0;
+  }
+
+  body .campo-textarea.campo-textarea {
+    min-height: 112px;
+  }
+
+  body .campo-rodape.campo-rodape {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  /* ----- Botoes --------------------------------------------------------- */
+  .botao {
+    min-height: var(--altura-botao);
+    height: auto;
+    padding: 0 var(--espaco-md);
+    text-align: center;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  .botao-pequeno {
+    min-height: 40px;
+  }
+
+  body .form-acoes.form-acoes,
+  body .acoes.acoes,
+  body .acoes-principais.acoes-principais,
+  body .aviso-acoes.aviso-acoes,
+  body .modal-acoes.modal-acoes {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body .form-acoes.form-acoes .botao,
+  body .acoes.acoes .botao,
+  body .acoes-principais.acoes-principais .botao,
+  body .aviso-acoes.aviso-acoes .botao,
+  body .modal-acoes.modal-acoes .botao {
+    width: 100%;
+  }
+
+  /* ----- Filtros e formularios ----------------------------------------- */
+  body .filtros.filtros,
+  body .form-linha.form-linha,
+  body .detalhes-grade.detalhes-grade,
+  body .perfil-dados.perfil-dados {
+    grid-template-columns: 1fr;
+  }
+
+  body .filtros.filtros {
+    padding: var(--espaco-md);
+    border-radius: var(--raio-card);
+  }
+
+  /* ----- Badges e pills ------------------------------------------------- */
+  .badge,
+  .pill-info {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .badge {
+    align-items: flex-start;
+    padding: 5px 10px;
+  }
+
+  /* ----- Lista de chamados --------------------------------------------- */
+  body .tc-cards.tc-cards {
+    gap: var(--espaco-sm);
+  }
+
+  body .card-chamado.card-chamado {
+    gap: var(--espaco-sm);
+  }
+
+  body .card-chamado-topo.card-chamado-topo,
+  body .card-chamado-rodape.card-chamado-rodape {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  body .card-chamado-rodape.card-chamado-rodape {
+    justify-content: flex-start;
+  }
+
+  body .card-chamado-solicitante.card-chamado-solicitante,
+  body .card-chamado-data.card-chamado-data {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  /* ----- Painel de detalhes -------------------------------------------- */
+  body .detalhes.detalhes {
+    gap: var(--espaco-md);
+  }
+
+  body .detalhes-cabecalho.detalhes-cabecalho,
+  body .detalhes-selos.detalhes-selos {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  body .detalhes-texto.detalhes-texto,
+  body .detalhes-item.detalhes-item {
+    overflow-wrap: anywhere;
+  }
+
+  body .detalhes-resposta.detalhes-resposta,
+  body .detalhes-solucao.detalhes-solucao {
+    padding: var(--espaco-md);
+    border-radius: var(--raio-card);
+  }
+
+  /* ----- Modal ---------------------------------------------------------- */
+  body .modal-overlay.modal-overlay {
+    align-items: flex-end;
+    padding: var(--mobile-page-padding);
+  }
+
+  body .modal.modal {
+    max-width: 100%;
+    max-height: calc(100dvh - (2 * var(--mobile-page-padding)));
+    overflow-y: auto;
+    border-radius: var(--raio-painel);
+  }
+
+  body .modal-cabecalho.modal-cabecalho {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 420px) {
+  .painel,
+  .cartao,
+  .cartao-destaque {
+    padding: var(--mobile-panel-padding);
+  }
+
+  .badge {
+    font-size: 11px;
+  }
+}

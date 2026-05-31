@@ -1,0 +1,9 @@
+/* ==========================================================================
+   TicketFlow - global.css (atalho)
+   --------------------------------------------------------------------------
+   Os estilos foram modularizados. O ponto de entrada agora e index.css.
+   Este arquivo existe apenas para compatibilidade: redireciona para o
+   principal. Prefira importar "./estilos/index.css" no app.
+   ========================================================================== */
+
+@import "./index.css";

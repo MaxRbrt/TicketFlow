@@ -1,0 +1,214 @@
+/* ==========================================================================
+   TicketFlow - Layout mobile
+   --------------------------------------------------------------------------
+   Regras da estrutura principal em celular: layout interno, topbar, drawer e
+   telas publicas de autenticacao.
+
+   Observacao tecnica: muitos componentes usam <style scoped>. Por isso alguns
+   seletores repetem a classe (ex.: .layout.layout) e usam body no inicio para
+   ganhar especificidade sem recorrer a !important.
+   ========================================================================== */
+
+@media (max-width: 1100px) {
+  html,
+  body,
+  #app {
+    min-height: 100%;
+  }
+
+  body {
+    min-width: 320px;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+  }
+
+  /* ----- Moldura interna ------------------------------------------------ */
+  body .layout.layout {
+    width: 100%;
+    min-height: 100dvh;
+    padding: var(--mobile-page-padding);
+    gap: var(--mobile-stack-gap);
+  }
+
+  body .layout-principal.layout-principal,
+  body .layout-conteudo.layout-conteudo {
+    width: 100%;
+    min-width: 0;
+    gap: var(--mobile-stack-gap);
+  }
+
+  /* ----- Drawer lateral ------------------------------------------------- */
+  body .layout-sidebar.layout-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: var(--largura-sidebar);
+    max-width: calc(100vw - 20px);
+    height: 100dvh;
+    padding: var(--mobile-page-padding);
+    z-index: var(--z-sidebar);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transform: translateX(calc(-100% - 20px));
+    transition: transform var(--transicao-media);
+  }
+
+  body .layout-sidebar.layout-sidebar.layout-sidebar-aberta {
+    transform: translateX(0);
+  }
+
+  body .layout-overlay.layout-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 22, 27, 0.62);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+  }
+
+  body .sidebar.sidebar {
+    width: 100%;
+    min-height: calc(100dvh - (2 * var(--mobile-page-padding)));
+    padding: var(--espaco-md);
+    border-radius: var(--raio-sidebar);
+  }
+
+  body .sidebar-marca.sidebar-marca,
+  body .sidebar-usuario.sidebar-usuario {
+    min-width: 0;
+  }
+
+  body .sidebar-marca-texto.sidebar-marca-texto,
+  body .sidebar-usuario-texto.sidebar-usuario-texto {
+    min-width: 0;
+  }
+
+  body .sidebar-nome.sidebar-nome,
+  body .sidebar-usuario-nome.sidebar-usuario-nome,
+  body .sidebar-tagline.sidebar-tagline,
+  body .sidebar-usuario-perfil.sidebar-usuario-perfil {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  body .sidebar-item.sidebar-item,
+  body .sidebar-sair.sidebar-sair {
+    min-height: 46px;
+    padding: 11px var(--espaco-md);
+  }
+
+  /* ----- Topbar --------------------------------------------------------- */
+  body .topbar.topbar {
+    position: sticky;
+    top: var(--mobile-page-padding);
+    z-index: var(--z-topbar);
+    min-height: var(--altura-topbar);
+    height: auto;
+    padding: 10px 12px;
+    gap: var(--espaco-sm);
+    border-radius: var(--raio-card);
+    flex-wrap: wrap;
+  }
+
+  body .topbar-esquerda.topbar-esquerda {
+    min-width: 0;
+    flex: 1;
+  }
+
+  body .topbar-menu.topbar-menu {
+    display: inline-flex;
+    flex: 0 0 auto;
+  }
+
+  body .topbar-titulo.topbar-titulo {
+    min-width: 0;
+    font-size: clamp(18px, 5vw, 22px);
+    line-height: 1.1;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  body .topbar-busca.topbar-busca {
+    order: 3;
+    display: flex;
+    flex: 0 0 100%;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+
+  body .topbar-acao.topbar-acao {
+    display: none;
+  }
+
+  body .topbar-direita.topbar-direita {
+    gap: 8px;
+    margin-left: 0;
+  }
+
+  body .topbar-avatar.topbar-avatar,
+  body .topbar .botao-icone.botao-icone {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+  }
+}
+
+@media (max-width: 760px) {
+  /* ----- Telas publicas (login/cadastro) -------------------------------- */
+  body .auth.auth {
+    min-height: 100dvh;
+    align-items: flex-start;
+    padding: 18px var(--mobile-page-padding);
+    overflow-y: auto;
+  }
+
+  body .auth-aura.auth-aura {
+    width: 110vw;
+    height: 110vw;
+    transform: translate(-50%, -42%);
+    opacity: 0.82;
+  }
+
+  body .auth-cartao.auth-cartao {
+    max-width: 100%;
+    padding: var(--mobile-panel-padding);
+    border-radius: var(--raio-painel);
+  }
+
+  body .auth-stack.auth-stack {
+    gap: var(--espaco-lg);
+  }
+
+  body .auth-marca.auth-marca {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  body .auth-logo.auth-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+  }
+
+  body .auth-selo.auth-selo {
+    display: none;
+  }
+
+  body .auth-titulo.auth-titulo {
+    font-size: clamp(25px, 8vw, 30px);
+  }
+
+}
+
+@media (max-width: 420px) {
+  body .topbar.topbar {
+    padding-inline: 10px;
+  }
+
+  body .topbar-avatar.topbar-avatar,
+  body .topbar .botao-icone.botao-icone {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+}

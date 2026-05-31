@@ -1,0 +1,142 @@
+/* ==========================================================================
+   TicketFlow - Botoes
+   --------------------------------------------------------------------------
+   Botoes em formato pill com micro-interacoes suaves. Base .botao + variantes.
+   ========================================================================== */
+
+.botao {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-sm);
+  height: var(--altura-botao);
+  padding: 0 var(--espaco-lg);
+  border-radius: var(--raio-botao);
+  font-size: var(--fonte-corpo);
+  font-weight: var(--peso-semibold);
+  white-space: nowrap;
+  overflow: hidden; /* contem o brilho do hover */
+  transition: transform var(--transicao-rapida), background var(--transicao-rapida),
+    box-shadow var(--transicao-media), opacity var(--transicao-rapida),
+    filter var(--transicao-rapida);
+}
+
+/* Brilho que cruza o botao no hover (micro-interacao). */
+.botao::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 70%
+  );
+  transform: translateX(-130%);
+  transition: transform var(--transicao-lenta);
+}
+
+.botao:hover::after {
+  transform: translateX(130%);
+}
+
+.botao:active {
+  transform: scale(0.97);
+}
+
+.botao:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.botao:disabled::after {
+  display: none;
+}
+
+/* ----- Variante primaria (ciano com glow) --------------------------------- */
+.botao-primario {
+  background: var(--cor-acento);
+  color: var(--cor-texto-sobre-acento);
+  font-weight: var(--peso-bold);
+  box-shadow: var(--sombra-card), var(--glow-acento);
+}
+
+.botao-primario:hover:not(:disabled) {
+  background: var(--cor-acento-claro);
+  box-shadow: var(--sombra-hover), var(--glow-acento-forte);
+  transform: translateY(-2px);
+}
+
+/* ----- Variante secundaria (vidro) ---------------------------------------- */
+.botao-secundario {
+  background: var(--vidro-fundo-forte);
+  color: var(--cor-azul-escuro);
+  border: 1px solid var(--vidro-borda);
+  backdrop-filter: blur(var(--vidro-blur));
+  -webkit-backdrop-filter: blur(var(--vidro-blur));
+}
+
+.botao-secundario:hover:not(:disabled) {
+  background: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* ----- Variante de perigo (excluir) --------------------------------------- */
+.botao-perigo {
+  background: var(--cor-erro);
+  color: #fff;
+}
+
+.botao-perigo:hover:not(:disabled) {
+  filter: brightness(0.94);
+  transform: translateY(-2px);
+}
+
+/* ----- Botao fantasma (so texto/icone) ------------------------------------ */
+.botao-fantasma {
+  background: transparent;
+  color: var(--cor-texto-secundario);
+  height: auto;
+  padding: var(--espaco-xs) var(--espaco-sm);
+}
+
+.botao-fantasma::after {
+  display: none;
+}
+
+.botao-fantasma:hover:not(:disabled) {
+  color: var(--cor-azul-escuro);
+}
+
+/* ----- Botao apenas icone (circular) -------------------------------------- */
+.botao-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: var(--raio-pill);
+  color: var(--cor-texto-secundario);
+  background: var(--vidro-fundo-forte);
+  border: 1px solid var(--vidro-borda);
+  transition: color var(--transicao-rapida), transform var(--transicao-rapida),
+    background var(--transicao-rapida);
+}
+
+.botao-icone::after {
+  display: none;
+}
+
+.botao-icone:hover:not(:disabled) {
+  color: var(--cor-azul-escuro);
+  transform: translateY(-2px);
+}
+
+/* ----- Tamanho compacto --------------------------------------------------- */
+.botao-pequeno {
+  height: 40px;
+  padding: 0 var(--espaco-md);
+  font-size: var(--fonte-pequena);
+}

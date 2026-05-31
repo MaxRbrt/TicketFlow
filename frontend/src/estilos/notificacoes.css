@@ -1,0 +1,164 @@
+/* ==========================================================================
+   TicketFlow - Notificacoes globais
+   --------------------------------------------------------------------------
+   Toasts efemeros usados por login, cadastro, CRUD de chamados e avisos do
+   suporte. O visual segue o tema Twilight: vidro escuro, borda tingida e glow
+   sutil pela cor semantica.
+   ========================================================================== */
+
+/* ----- Host --------------------------------------------------------------- */
+.toasts {
+  position: fixed;
+  right: var(--espaco-lg);
+  bottom: var(--espaco-lg);
+  z-index: var(--z-notificacao);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-sm);
+  width: min(390px, calc(100vw - 2 * var(--espaco-lg)));
+  pointer-events: none;
+}
+
+/* ----- Card de notificacao ------------------------------------------------ */
+.toast {
+  --toast-cor: var(--cor-acento);
+
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 28px;
+  align-items: start;
+  gap: var(--espaco-sm);
+  padding: 14px;
+  color: var(--cor-texto-principal);
+  background:
+    radial-gradient(140% 140% at 0% 0%, color-mix(in srgb, var(--toast-cor) 18%, transparent), transparent 55%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.055)),
+    var(--vidro-fundo-forte);
+  backdrop-filter: blur(var(--vidro-blur));
+  -webkit-backdrop-filter: blur(var(--vidro-blur));
+  border: 1px solid color-mix(in srgb, var(--toast-cor) 34%, var(--vidro-borda));
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-card), 0 0 18px color-mix(in srgb, var(--toast-cor) 18%, transparent);
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+/* Filete lateral: sinal rapido do tipo sem depender apenas de cor no texto. */
+.toast::before {
+  content: "";
+  position: absolute;
+  inset: 10px auto 10px 0;
+  width: 3px;
+  border-radius: 0 var(--raio-pill) var(--raio-pill) 0;
+  background: var(--toast-cor);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--toast-cor) 55%, transparent);
+}
+
+.toast-sucesso {
+  --toast-cor: var(--cor-sucesso);
+}
+
+.toast-erro {
+  --toast-cor: var(--cor-erro);
+}
+
+.toast-info {
+  --toast-cor: var(--cor-acento);
+}
+
+/* ----- Conteudo ----------------------------------------------------------- */
+.toast-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--toast-cor);
+  background: color-mix(in srgb, var(--toast-cor) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--toast-cor) 28%, transparent);
+  flex-shrink: 0;
+}
+
+.toast-corpo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toast-titulo {
+  font-size: var(--fonte-pequena);
+  font-weight: var(--peso-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--toast-cor);
+}
+
+.toast-mensagem {
+  color: var(--cor-texto-principal);
+  font-size: var(--fonte-corpo);
+  font-weight: var(--peso-medio);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.toast-fechar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--raio-pill);
+  color: var(--cor-texto-secundario);
+  transition: color var(--transicao-rapida), background var(--transicao-rapida),
+    transform var(--transicao-rapida);
+}
+
+.toast-fechar:hover,
+.toast-fechar:focus-visible {
+  color: var(--cor-texto-principal);
+  background: var(--vidro-fundo);
+}
+
+.toast-fechar:active {
+  transform: scale(0.94);
+}
+
+/* ----- Transicoes --------------------------------------------------------- */
+.toast-enter-active,
+.toast-leave-active {
+  transition: opacity var(--transicao-media), transform var(--transicao-media);
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(28px);
+}
+
+/* ----- Mobile ------------------------------------------------------------- */
+@media (max-width: 760px) {
+  .toasts {
+    right: var(--mobile-page-padding);
+    bottom: calc(var(--mobile-page-padding) + env(safe-area-inset-bottom));
+    left: var(--mobile-page-padding);
+    width: auto;
+  }
+
+  .toast {
+    grid-template-columns: 32px minmax(0, 1fr) 28px;
+    padding: 13px;
+    border-radius: var(--raio-card);
+  }
+
+  .toast-icone {
+    width: 32px;
+    height: 32px;
+  }
+
+  .toast-enter-from,
+  .toast-leave-to {
+    transform: translateY(16px);
+  }
+}

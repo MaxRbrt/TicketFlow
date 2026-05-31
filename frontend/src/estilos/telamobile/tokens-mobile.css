@@ -1,0 +1,89 @@
+/* ==========================================================================
+   TicketFlow - Tokens mobile
+   --------------------------------------------------------------------------
+   Ajusta a escala visual para telas de celular sem trocar a identidade:
+   continua o tema "Twilight" escuro, com vidro e acento ciano.
+
+   Breakpoints escolhidos:
+     - ate 1100px: modo compacto, sem sidebar fixa.
+     - ate 760px: cobre celulares comuns e celulares em paisagem.
+     - ate 420px: refinamento para telas estreitas.
+   ========================================================================== */
+
+@media (max-width: 1100px) {
+  :root {
+    /* ----- Layout -------------------------------------------------------- */
+    --mobile-page-padding: 16px;
+    --mobile-stack-gap: 18px;
+    --mobile-panel-padding: 22px;
+    --largura-sidebar: min(86vw, 320px);
+    --altura-topbar: 68px;
+
+    /* ----- Espacamento -------------------------------------------------- */
+    --espaco-lg: 24px;
+    --espaco-xl: 32px;
+
+    /* ----- Tipografia --------------------------------------------------- */
+    --fonte-titulo-hero: 38px;
+    --fonte-titulo: 24px;
+    --fonte-indicador: 30px;
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    /* ----- Layout -------------------------------------------------------- */
+    --mobile-page-padding: 12px;
+    --mobile-stack-gap: 16px;
+    --mobile-panel-padding: 18px;
+
+    /* O drawer precisa de largura real no mobile. O responsivo.css antigo
+       zerava esta variavel para remover a sidebar do fluxo do desktop. */
+    --largura-sidebar: min(84vw, 292px);
+    --altura-topbar: 64px;
+
+    /* ----- Espacamento -------------------------------------------------- */
+    --espaco-xs: 5px;
+    --espaco-sm: 10px;
+    --espaco-md: 16px;
+    --espaco-lg: 20px;
+    --espaco-xl: 24px;
+    --espaco-2xl: 34px;
+
+    /* ----- Raios -------------------------------------------------------- */
+    --raio-painel: 24px;
+    --raio-card: 20px;
+    --raio-sidebar: 26px;
+    --raio-botao: 18px;
+    --raio-input: 16px;
+
+    /* ----- Controles ---------------------------------------------------- */
+    --altura-botao: 48px;
+    --altura-input: 48px;
+
+    /* ----- Tipografia --------------------------------------------------- */
+    --fonte-titulo-hero: 30px;
+    --fonte-titulo: 21px;
+    --fonte-indicador: 28px;
+    --fonte-card-titulo: 15px;
+    --fonte-corpo: 14px;
+    --fonte-pequena: 12px;
+
+    /* ----- Efeito visual ------------------------------------------------ */
+    --vidro-blur: 16px;
+    --grao-opacidade: 0.045;
+  }
+}
+
+@media (max-width: 420px) {
+  :root {
+    --mobile-page-padding: 10px;
+    --mobile-stack-gap: 14px;
+    --mobile-panel-padding: 16px;
+    --largura-sidebar: min(88vw, 286px);
+    --altura-topbar: 60px;
+    --fonte-titulo-hero: 28px;
+    --fonte-titulo: 20px;
+    --fonte-indicador: 26px;
+  }
+}

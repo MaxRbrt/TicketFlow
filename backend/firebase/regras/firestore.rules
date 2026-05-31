@@ -1,0 +1,253 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function estaLogado() {
+      return request.auth != null;
+    }
+
+    function eDono(uid) {
+      return estaLogado() && request.auth.uid == uid;
+    }
+
+    function perfilDoUsuario() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function temPerfilAtivo() {
+      return estaLogado()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && perfilDoUsuario().active == true;
+    }
+
+    function eSuporte() {
+      return temPerfilAtivo() && perfilDoUsuario().role == 'support';
+    }
+
+    function statusValido(status) {
+      return status in ['open', 'in_progress', 'waiting_requester', 'resolved', 'cancelled'];
+    }
+
+    function prioridadeValida(priority) {
+      return priority in ['low', 'medium', 'high', 'urgent'];
+    }
+
+    function camposUsuarioObrigatorios() {
+      return request.resource.data.keys().hasAll([
+        'uid',
+        'name',
+        'email',
+        'role',
+        'department',
+        'active',
+        'createdAt',
+        'updatedAt'
+      ]);
+    }
+
+    function camposUsuarioPermitidos() {
+      return request.resource.data.keys().hasOnly([
+        'uid',
+        'name',
+        'email',
+        'role',
+        'department',
+        'active',
+        'createdAt',
+        'updatedAt'
+      ]);
+    }
+
+    function usuarioValido(userId) {
+      return camposUsuarioObrigatorios()
+        && camposUsuarioPermitidos()
+        && request.resource.data.uid == userId
+        && request.resource.data.name is string
+        && request.resource.data.email is string
+        && request.resource.data.role in ['requester', 'support']
+        && request.resource.data.active is bool
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function camposTicketObrigatorios() {
+      return request.resource.data.keys().hasAll([
+        'id',
+        'title',
+        'description',
+        'category',
+        'priority',
+        'status',
+        'location',
+        'requesterId',
+        'requesterName',
+        'requesterEmail',
+        'assignedToId',
+        'assignedToName',
+        'supportResponse',
+        'resolution',
+        'createdAt',
+        'updatedAt',
+        'resolvedAt',
+        'cancelledAt'
+      ]);
+    }
+
+    function camposTicketPermitidos() {
+      return request.resource.data.keys().hasOnly([
+        'id',
+        'title',
+        'description',
+        'category',
+        'priority',
+        'status',
+        'location',
+        'requesterId',
+        'requesterName',
+        'requesterEmail',
+        'assignedToId',
+        'assignedToName',
+        'supportResponse',
+        'resolution',
+        'createdAt',
+        'updatedAt',
+        'resolvedAt',
+        'cancelledAt'
+      ]);
+    }
+
+    function ticketBaseValido(ticketId) {
+      return camposTicketObrigatorios()
+        && camposTicketPermitidos()
+        && request.resource.data.id == ticketId
+        && request.resource.data.title is string
+        && request.resource.data.description is string
+        && request.resource.data.category is string
+        && request.resource.data.priority is string
+        && request.resource.data.status is string
+        && request.resource.data.location is string
+        && request.resource.data.requesterId is string
+        && request.resource.data.requesterName is string
+        && request.resource.data.requesterEmail is string
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && prioridadeValida(request.resource.data.priority)
+        && statusValido(request.resource.data.status);
+    }
+
+    function camposEditaveisPeloSolicitante() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'title',
+        'description',
+        'category',
+        'priority',
+        'location',
+        'status',
+        'updatedAt',
+        'cancelledAt'
+      ]);
+    }
+
+    function camposEditaveisPeloSuporte() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'status',
+        'assignedToId',
+        'assignedToName',
+        'supportResponse',
+        'resolution',
+        'updatedAt',
+        'resolvedAt',
+        'cancelledAt'
+      ]);
+    }
+
+    match /users/{userId} {
+      allow read: if eDono(userId) || eSuporte();
+
+      allow create: if eDono(userId)
+        && usuarioValido(userId)
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.active == true;
+
+      allow update: if eDono(userId)
+        && usuarioValido(userId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.active == resource.data.active
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name',
+          'department',
+          'updatedAt'
+        ]);
+
+      // Autoexclusao de conta (opcao A): o proprio usuario pode apagar seu
+      // documento de perfil. Outros usuarios e o suporte nao apagam perfis
+      // alheios. A exclusao da conta no Authentication e feita pelo cliente.
+      allow delete: if eDono(userId);
+    }
+
+    match /tickets/{ticketId} {
+      allow read: if eSuporte()
+        || (estaLogado() && resource.data.requesterId == request.auth.uid);
+
+      allow create: if estaLogado()
+        && ticketBaseValido(ticketId)
+        && request.resource.data.requesterId == request.auth.uid
+        && request.resource.data.requesterEmail == request.auth.token.email
+        && request.resource.data.status == 'open'
+        && request.resource.data.assignedToId == null
+        && request.resource.data.assignedToName == null
+        && request.resource.data.supportResponse == null
+        && request.resource.data.resolution == null
+        && request.resource.data.resolvedAt == null
+        && request.resource.data.cancelledAt == null;
+
+      allow update: if estaLogado()
+        && ticketBaseValido(ticketId)
+        && resource.data.requesterId == request.auth.uid
+        && resource.data.status == 'open'
+        && request.resource.data.requesterId == resource.data.requesterId
+        && request.resource.data.requesterEmail == resource.data.requesterEmail
+        && request.resource.data.requesterName == resource.data.requesterName
+        && request.resource.data.assignedToId == resource.data.assignedToId
+        && request.resource.data.assignedToName == resource.data.assignedToName
+        && request.resource.data.supportResponse == resource.data.supportResponse
+        && request.resource.data.resolution == resource.data.resolution
+        && request.resource.data.resolvedAt == resource.data.resolvedAt
+        && request.resource.data.status in ['open', 'cancelled']
+        && camposEditaveisPeloSolicitante();
+
+      allow update: if eSuporte()
+        && ticketBaseValido(ticketId)
+        && request.resource.data.requesterId == resource.data.requesterId
+        && request.resource.data.requesterEmail == resource.data.requesterEmail
+        && request.resource.data.requesterName == resource.data.requesterName
+        && request.resource.data.title == resource.data.title
+        && request.resource.data.description == resource.data.description
+        && request.resource.data.category == resource.data.category
+        && request.resource.data.priority == resource.data.priority
+        && request.resource.data.location == resource.data.location
+        && request.resource.data.createdAt == resource.data.createdAt
+        && camposEditaveisPeloSuporte();
+
+      allow delete: if eSuporte()
+        || (estaLogado()
+          && resource.data.requesterId == request.auth.uid
+          && resource.data.status == 'open');
+
+      match /historico/{historicoId} {
+        allow read: if eSuporte()
+          || (estaLogado()
+            && get(/databases/$(database)/documents/tickets/$(ticketId)).data.requesterId == request.auth.uid);
+        allow write: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

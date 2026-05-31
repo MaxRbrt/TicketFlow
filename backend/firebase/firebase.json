@@ -1,0 +1,7 @@
+{
+  "//": "Plano FREE (Spark): apenas Firestore + Hosting. Storage e Functions exigem Blaze e foram removidos do deploy. O codigo das Functions continua em backend/funcoes/ como opcional (so deployavel no Blaze).",
+  "firestore": {
+    "rules": "regras/firestore.rules",
+    "indexes": "indices/firestore.indexes.json"
+  }
+}

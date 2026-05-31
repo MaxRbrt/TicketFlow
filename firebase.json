@@ -1,0 +1,22 @@
+{
+  "//": "Plano FREE (Spark): deploy apenas de Firestore + Hosting. Storage e Functions ficam fora do deploy.",
+  "firestore": {
+    "rules": "backend/firebase/regras/firestore.rules",
+    "indexes": "backend/firebase/indices/firestore.indexes.json"
+  },
+  "hosting": {
+    "site": "projetoticketflow-c3b5c",
+    "public": "frontend/dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

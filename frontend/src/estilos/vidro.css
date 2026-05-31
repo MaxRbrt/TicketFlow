@@ -1,0 +1,67 @@
+/* ==========================================================================
+   TicketFlow - Vidro (glassmorphism)
+   --------------------------------------------------------------------------
+   Classes reutilizaveis de "vidro fosco". Use .vidro para paineis translucidos
+   e .cartao para cards. .elevavel adiciona reacao suave no hover.
+   ========================================================================== */
+
+/* ----- Painel de vidro translucido ---------------------------------------- */
+.vidro {
+  background: var(--vidro-fundo);
+  backdrop-filter: blur(var(--vidro-blur));
+  -webkit-backdrop-filter: blur(var(--vidro-blur));
+  border: 1px solid var(--vidro-borda);
+  box-shadow: var(--sombra-suave), var(--sombra-interna);
+}
+
+/* ----- Card padrao (vidro mais opaco + padding) --------------------------- */
+.cartao {
+  background: var(--vidro-fundo-forte);
+  backdrop-filter: blur(var(--vidro-blur));
+  -webkit-backdrop-filter: blur(var(--vidro-blur));
+  border: 1px solid var(--vidro-borda);
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-card), var(--sombra-interna);
+  padding: var(--espaco-lg);
+}
+
+/* ----- Painel grande (mais arredondado) ----------------------------------- */
+.painel {
+  background: var(--vidro-fundo-forte);
+  backdrop-filter: blur(var(--vidro-blur));
+  -webkit-backdrop-filter: blur(var(--vidro-blur));
+  border: 1px solid var(--vidro-borda);
+  border-radius: var(--raio-painel);
+  box-shadow: var(--sombra-suave), var(--sombra-interna);
+  padding: var(--espaco-xl);
+}
+
+/* ----- Card de acao em destaque (vidro escuro + borda/glow ciano) --------- */
+.cartao-destaque {
+  position: relative;
+  background:
+    radial-gradient(120% 120% at 0% 0%, rgba(69, 211, 218, 0.16), transparent 55%),
+    var(--vidro-fundo-forte);
+  backdrop-filter: blur(var(--vidro-blur));
+  -webkit-backdrop-filter: blur(var(--vidro-blur));
+  color: var(--cor-texto-sobre-escuro);
+  border: 1px solid color-mix(in srgb, var(--cor-acento) 45%, transparent);
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-card), var(--glow-acento);
+  padding: var(--espaco-lg);
+}
+
+.cartao-destaque .texto-secundario {
+  color: rgba(238, 247, 248, 0.72);
+}
+
+/* ----- Elevacao suave no hover (cards clicaveis) -------------------------- */
+.elevavel {
+  transition: transform var(--transicao-media), box-shadow var(--transicao-media);
+  will-change: transform;
+}
+
+.elevavel:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sombra-hover), var(--sombra-interna);
+}

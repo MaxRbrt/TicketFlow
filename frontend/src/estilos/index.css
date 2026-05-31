@@ -1,0 +1,36 @@
+/* ==========================================================================
+   TicketFlow - CSS PRINCIPAL
+   --------------------------------------------------------------------------
+   Ponto unico de entrada dos estilos. Importe APENAS este arquivo no app
+   (em main.js: import "./estilos/index.css").
+
+   A ORDEM importa (cascata):
+     1. variaveis   -> tokens (precisam existir antes de tudo)
+     2. base        -> reset e elementos
+     3. tipografia  -> carrega fontes e define escalas
+     4. atmosfera   -> fundo (gradiente + blobs + grao)
+     5. vidro       -> glassmorphism
+     6. botoes      -> botoes
+     7. badges      -> selos de status/prioridade
+     8. notificacoes -> toasts globais
+     9. animacoes   -> keyframes e utilitarios de movimento
+    10. scroll      -> rolagem e scroll-reveal
+    11. responsivo  -> breakpoints
+    12. telamobile  -> refinamentos especificos de celular
+
+   Regras @import precisam vir antes de qualquer outra regra; por isso este
+   arquivo contem somente imports.
+   ========================================================================== */
+
+@import "./variaveis.css";
+@import "./base.css";
+@import "./tipografia.css";
+@import "./atmosfera.css";
+@import "./vidro.css";
+@import "./botoes.css";
+@import "./badges.css";
+@import "./notificacoes.css";
+@import "./animacoes.css";
+@import "./scroll.css";
+@import "./responsivo.css";
+@import "./telamobile/index.css";

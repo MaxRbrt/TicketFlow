@@ -1,0 +1,63 @@
+/* ==========================================================================
+   TicketFlow - Tipografia
+   --------------------------------------------------------------------------
+   Carrega as fontes e define as classes de texto reutilizaveis.
+   - Corpo: Inter (legibilidade, neutra e limpa).
+   - Display: Clash Display (titulos grandes, personalidade premium).
+
+   IMPORTANTE: regras @import precisam vir antes de qualquer outra regra CSS.
+   ========================================================================== */
+
+@import url("https://api.fontshare.com/v2/css?f[]=clash-display@600,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700&display=swap");
+
+/* ----- Titulos grandes (hero/dashboard) ----------------------------------- */
+.titulo-hero {
+  font-family: var(--fonte-display);
+  font-size: var(--fonte-titulo-hero);
+  font-weight: var(--peso-bold);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--cor-texto-principal);
+}
+
+/* ----- Titulos de secao --------------------------------------------------- */
+.titulo-secao {
+  font-family: var(--fonte-display);
+  font-size: var(--fonte-titulo);
+  font-weight: var(--peso-semibold);
+  letter-spacing: -0.01em;
+  color: var(--cor-texto-principal);
+}
+
+/* ----- Numeros / indicadores (cards de resumo) ---------------------------- */
+/* Acento ciano com glow sutil, como os numeros da referencia. */
+.numero-indicador {
+  font-family: var(--fonte-display);
+  font-size: var(--fonte-indicador);
+  font-weight: var(--peso-bold);
+  color: var(--cor-acento);
+  text-shadow: var(--glow-texto);
+  line-height: 1;
+}
+
+/* ----- Titulo de card ----------------------------------------------------- */
+.titulo-card {
+  font-size: var(--fonte-card-titulo);
+  font-weight: var(--peso-semibold);
+  color: var(--cor-texto-principal);
+}
+
+/* ----- Texto secundario --------------------------------------------------- */
+.texto-secundario {
+  color: var(--cor-texto-secundario);
+}
+
+/* ----- Rotulo pequeno em maiusculas (ex.: "ABERTOS") ---------------------- */
+.rotulo-pequeno {
+  font-size: var(--fonte-pequena);
+  font-weight: var(--peso-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cor-texto-secundario);
+}

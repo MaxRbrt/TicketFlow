@@ -1,0 +1,172 @@
+/* ==========================================================================
+   TicketFlow - Paginas mobile
+   --------------------------------------------------------------------------
+   Ajustes finos das telas para celular. Mantem a composicao densa e utilitaria
+   do sistema, evitando que cabecalhos, acoes e textos longos estourem a tela.
+   ========================================================================== */
+
+@media (max-width: 1100px) {
+  /* ----- Cabecalhos em modo compacto ----------------------------------- */
+  body .topo-painel.topo-painel,
+  body .topo.topo,
+  body .bloco-cabecalho.bloco-cabecalho {
+    min-width: 0;
+  }
+
+  body .topo-painel.topo-painel > *,
+  body .topo.topo > *,
+  body .bloco-cabecalho.bloco-cabecalho > * {
+    min-width: 0;
+  }
+
+  body .novo-chamado.novo-chamado,
+  body .detalhes-pagina.detalhes-pagina,
+  body .atendimento.atendimento,
+  body .perfil.perfil {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  body .topo-painel.topo-painel,
+  body .topo.topo,
+  body .bloco-cabecalho.bloco-cabecalho {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--espaco-sm);
+  }
+
+  body .topo-painel.topo-painel .botao,
+  body .topo.topo .botao {
+    width: 100%;
+  }
+
+  body .ver-todos.ver-todos {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  /* ----- Cabecalhos de paginas ----------------------------------------- */
+  body .topo-painel.topo-painel,
+  body .topo.topo,
+  body .bloco-cabecalho.bloco-cabecalho {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--espaco-sm);
+  }
+
+  body .topo-painel.topo-painel .botao,
+  body .topo.topo .botao {
+    width: 100%;
+  }
+
+  body .saudacao.saudacao {
+    margin-top: var(--espaco-sm);
+  }
+
+  body .ver-todos.ver-todos {
+    align-self: flex-start;
+  }
+
+  /* ----- Containers de paginas ----------------------------------------- */
+  body .novo-chamado.novo-chamado,
+  body .detalhes-pagina.detalhes-pagina,
+  body .atendimento.atendimento,
+  body .perfil.perfil {
+    max-width: 100%;
+  }
+
+  /* ----- Dashboard suporte --------------------------------------------- */
+  body .urgentes-grade.urgentes-grade {
+    grid-template-columns: 1fr;
+    gap: var(--espaco-sm);
+  }
+
+  body .urgente-card.urgente-card {
+    padding: var(--espaco-md);
+  }
+
+  body .urgente-titulo.urgente-titulo {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  body .urgente-selos.urgente-selos {
+    gap: 8px;
+  }
+
+  /* ----- Atendimento do suporte ---------------------------------------- */
+  body .linha-status.linha-status,
+  body .linha-campo.linha-campo {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  body .linha-status.linha-status > *,
+  body .linha-campo.linha-campo > * {
+    width: 100%;
+  }
+
+  body .responsavel.responsavel {
+    overflow-wrap: anywhere;
+  }
+
+  /* ----- Perfil --------------------------------------------------------- */
+  body .perfil-cabecalho.perfil-cabecalho {
+    align-items: flex-start;
+  }
+
+  body .perfil-avatar.perfil-avatar {
+    width: 58px;
+    height: 58px;
+    font-size: 24px;
+  }
+
+  body .perfil-item.perfil-item dd {
+    overflow-wrap: anywhere;
+  }
+
+  body .perfil-rodape.perfil-rodape {
+    justify-content: stretch;
+  }
+
+  body .perfil-rodape.perfil-rodape .botao {
+    width: 100%;
+  }
+
+  body .zona-perigo.zona-perigo {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  body .zona-perigo.zona-perigo .botao {
+    width: 100%;
+  }
+
+  /* ----- Avisos publicos (404 / acesso negado) -------------------------- */
+  body .tela-aviso.tela-aviso {
+    min-height: 100dvh;
+    padding: var(--mobile-page-padding);
+  }
+
+  body .cartao-aviso.cartao-aviso {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  body .aviso-codigo.aviso-codigo {
+    font-size: clamp(54px, 18vw, 72px);
+  }
+}
+
+@media (max-width: 420px) {
+  body .perfil-cabecalho.perfil-cabecalho {
+    flex-direction: column;
+  }
+
+  body .pill-info.pill-info {
+    width: fit-content;
+  }
+}

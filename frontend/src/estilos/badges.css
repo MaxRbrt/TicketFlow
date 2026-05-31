@@ -1,0 +1,73 @@
+/* ==========================================================================
+   TicketFlow - Badges (selos de status e prioridade)
+   --------------------------------------------------------------------------
+   O componente passa a cor pela variavel --cor-badge (vinda das constantes JS,
+   ex.: var(--cor-status-aberto)). A classe .badge-suave tinge o fundo a partir
+   dessa cor, mantendo o texto legivel. Assim um unico estilo serve a todos os
+   status e prioridades.
+   ========================================================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  padding: 5px 12px;
+  border-radius: var(--raio-pill);
+  font-size: var(--fonte-pequena);
+  font-weight: var(--peso-semibold);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* ----- Badge suave: fundo tingido a partir de --cor-badge ----------------- */
+.badge-suave {
+  /* color-mix tem amplo suporte; o fallback abaixo cobre navegadores antigos. */
+  color: var(--cor-badge, var(--cor-texto-secundario));
+  background: rgba(63, 95, 153, 0.12); /* fallback */
+  background: color-mix(in srgb, var(--cor-badge, #6f7c8e) 14%, transparent);
+  border: 1px solid transparent;
+  border-color: color-mix(in srgb, var(--cor-badge, #6f7c8e) 28%, transparent);
+}
+
+/* Ponto colorido antes do texto (reforca a cor do status). */
+.badge-suave .ponto {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cor-badge, var(--cor-texto-secundario));
+}
+
+/* ----- Badge solido (alto contraste, ex.: destaque) ----------------------- */
+.badge-solido {
+  color: #fff;
+  background: var(--cor-badge, var(--cor-azul-destaque));
+}
+
+/* ----- Destaque pulsante para chamados urgentes (RN008) ------------------- */
+.badge-urgente {
+  --cor-badge: var(--cor-prioridade-urgente);
+  animation: pulsar-urgente 2.2s ease-in-out infinite;
+}
+
+/* ----- Pill informativa neutra (ex.: "Sistema ativo") --------------------- */
+.pill-info {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  padding: 6px 14px;
+  border-radius: var(--raio-pill);
+  font-size: var(--fonte-pequena);
+  font-weight: var(--peso-medio);
+  color: var(--cor-texto-secundario);
+  background: var(--vidro-fundo-forte);
+  border: 1px solid var(--vidro-borda);
+}
+
+.pill-info .ponto {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cor-sucesso);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--cor-sucesso) 60%, transparent);
+  animation: pulsar-ponto 2s ease-out infinite;
+}

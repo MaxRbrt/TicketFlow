@@ -1,0 +1,30 @@
+# Dependencias
+node_modules/
+
+# Build / artefatos
+frontend/dist/
+dist/
+
+# Cache do Firebase CLI
+.firebase/
+*.log
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Variaveis de ambiente / segredos
+.env
+.env.*
+*serviceAccount*.json
+*service-account*.json
+*-credentials.json
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp

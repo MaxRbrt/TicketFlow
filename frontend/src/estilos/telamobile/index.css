@@ -1,0 +1,18 @@
+/* ==========================================================================
+   TicketFlow - Camada mobile
+   --------------------------------------------------------------------------
+   Entrada unica dos ajustes especificos para celular.
+
+   Esta pasta fica separada do responsivo.css para manter a manutencao simples:
+     1. tokens-mobile       -> variaveis e escala compacta
+     2. layout-mobile       -> estrutura geral, topbar, drawer e login
+     3. componentes-mobile  -> botoes, formularios, cards, tabela, modal
+     4. paginas-mobile      -> ajustes finos das telas do app
+
+   Importado por ultimo em estilos/index.css para sobrescrever a base geral.
+   ========================================================================== */
+
+@import "./tokens-mobile.css";
+@import "./layout-mobile.css";
+@import "./componentes-mobile.css";
+@import "./paginas-mobile.css";

@@ -1,0 +1,75 @@
+/* ==========================================================================
+   TicketFlow - Estilos responsivos
+   --------------------------------------------------------------------------
+   Ajusta tokens e helpers conforme o tamanho da tela. A maioria do layout usa
+   as variaveis de variaveis.css; aqui apenas reescrevemos os tokens que mudam
+   por breakpoint, alem de classes de visibilidade.
+
+   Breakpoints principais:
+     - Compacto : ate 1100px (tablet, notebook estreito, janela reduzida)
+     - Mobile   : ate 760px
+   ========================================================================== */
+
+/* ----- Helpers de visibilidade -------------------------------------------- */
+/* IMPORTANTE: nunca usar `display: initial` aqui. O valor initial de `display`
+   e `inline` (nao o display natural do elemento), o que quebrava <table> e
+   botoes (perdiam o formato de tabela / o tamanho). O padrao correto e apenas
+   ESCONDER com `display: none` e, ao mostrar, devolver o display natural com
+   `revert`. Use estes helpers so em elementos block/inline simples; componentes
+   com display proprio (tabela, cards) controlam a propria responsividade. */
+.apenas-mobile {
+  display: none;
+}
+
+.apenas-desktop {
+  display: revert;
+}
+
+/* ==========================================================================
+   COMPACTO - ate 1100px
+   ========================================================================== */
+@media (max-width: 1100px) {
+  :root {
+    --largura-sidebar: min(86vw, 320px);
+    --altura-topbar: 68px;
+    --fonte-titulo-hero: 38px;
+    --fonte-titulo: 24px;
+    --espaco-2xl: 40px;
+    --espaco-xl: 32px;
+    --espaco-lg: 24px;
+  }
+}
+
+/* ==========================================================================
+   MOBILE - ate 760px
+   --------------------------------------------------------------------------
+   A sidebar deixa de ocupar espaco fixo (vira menu/hamburguer controlado pelo
+   layout). Tipografia e espacamentos ficam mais compactos. Tabelas viram
+   cards (tratado nos componentes de tabela).
+   ========================================================================== */
+@media (max-width: 760px) {
+  :root {
+    --largura-sidebar: min(84vw, 292px);
+    --altura-topbar: 68px;
+    --fonte-titulo-hero: 30px;
+    --fonte-titulo: 22px;
+    --fonte-indicador: 26px;
+    --raio-painel: 28px;
+    --raio-sidebar: 32px;
+    --espaco-xl: 24px;
+    --espaco-lg: 20px;
+  }
+
+  .apenas-desktop {
+    display: none;
+  }
+
+  .apenas-mobile {
+    display: revert;
+  }
+
+  /* Cards e paineis com padding reduzido no celular. */
+  .cartao {
+    padding: var(--espaco-md);
+  }
+}
