@@ -9,6 +9,8 @@
 
 import {
   Chart as ChartJS,
+  LineController,
+  BarController,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -71,6 +73,8 @@ export function registrarChart() {
   aplicado = true;
 
   ChartJS.register(
+    LineController,
+    BarController,
     CategoryScale,
     LinearScale,
     PointElement,

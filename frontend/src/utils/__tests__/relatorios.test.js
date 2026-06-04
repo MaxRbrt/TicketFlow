@@ -20,7 +20,9 @@ function t(over = {}) {
   return {
     id: over.id || Math.random().toString(36).slice(2),
     status: over.status || "open",
-    location: over.location ?? "TI",
+    // "location" in over preserva null/"" passados de proposito (o ?? converteria
+    // null para o default, escondendo a normalizacao testada).
+    location: "location" in over ? over.location : "TI",
     requesterId: over.requesterId || "u1",
     requesterName: over.requesterName || "Ana",
     createdAt: over.createdAt || "2026-06-10T09:00:00",
