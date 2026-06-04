@@ -10,39 +10,8 @@
 import { storeToRefs } from "pinia";
 import { useStoreAutenticacao } from "../stores/storeAutenticacao.js";
 import { useNotificacao } from "./useNotificacao.js";
-
-// Mapa de codigos de erro do Firebase Auth -> mensagem amigavel em portugues.
-const MENSAGENS_ERRO = {
-  "auth/invalid-email": "E-mail invalido.",
-  "auth/user-disabled": "Esta conta esta desativada.",
-  "auth/user-not-found": "Nao foi possivel fazer login. Verifique seus dados.",
-  "auth/wrong-password": "Nao foi possivel fazer login. Verifique seus dados.",
-  "auth/invalid-credential": "Nao foi possivel fazer login. Verifique seus dados.",
-  "auth/email-already-in-use": "Este e-mail ja esta cadastrado.",
-  "auth/weak-password": "A senha deve ter pelo menos 6 caracteres.",
-  "auth/operation-not-allowed": "Cadastro por e-mail e senha nao esta ativado no Firebase Authentication.",
-  "auth/admin-restricted-operation": "Cadastro bloqueado pela configuracao do Firebase Authentication.",
-  "auth/invalid-api-key": "A chave da aplicacao Firebase esta invalida.",
-  "auth/too-many-requests": "Muitas tentativas. Tente novamente mais tarde.",
-  "auth/network-request-failed": "Falha de conexao. Verifique sua internet.",
-  "auth/requires-recent-login": "Sua sessao expirou. Faca login novamente para excluir a conta.",
-  "auth/missing-password": "Informe sua senha para confirmar.",
-  "permission-denied": "A conta foi autenticada, mas o Firestore bloqueou a criacao do perfil.",
-  "unavailable": "Firebase indisponivel no momento. Tente novamente em instantes.",
-};
-
-/**
- * Traduz um erro do Firebase para mensagem amigavel.
- * @param {*} erro - Erro lancado pelo Firebase (tem `code`).
- * @returns {string} Mensagem em portugues.
- */
-function traduzirErro(erro) {
-  console.error("Erro Firebase:", erro?.code || erro?.message || erro);
-  return (
-    MENSAGENS_ERRO[erro?.code] ||
-    `Ocorreu um erro inesperado${erro?.code ? ` (${erro.code})` : ""}. Tente novamente.`
-  );
-}
+import { recuperarSenha as recuperarSenhaServico } from "../servicos/servicoAutenticacao.js";
+import { traduzirErro } from "../utils/errorHandler.js";
 
 export function useAutenticacao() {
   const store = useStoreAutenticacao();
@@ -76,6 +45,26 @@ export function useAutenticacao() {
       const u = await store.cadastrar(dados);
       notificacao.sucesso("Conta criada com sucesso.");
       return { ok: true, usuario: u };
+    } catch (erro) {
+      const mensagem = traduzirErro(erro);
+      notificacao.erro(mensagem);
+      return { ok: false, erro: mensagem };
+    }
+  }
+
+  /**
+   * Envia e-mail de recuperacao de senha (RF extra). Por seguranca, o Firebase
+   * nao revela se o e-mail existe; mostramos a mesma mensagem de sucesso em
+   * qualquer caso (exceto erros de formato/conexao). Retorna { ok, erro? }.
+   * @param {string} email - E-mail para onde enviar o link de redefinicao.
+   */
+  async function recuperarSenha(email) {
+    try {
+      await recuperarSenhaServico(email);
+      notificacao.sucesso(
+        "Se este e-mail estiver cadastrado, enviamos um link para redefinir a senha."
+      );
+      return { ok: true };
     } catch (erro) {
       const mensagem = traduzirErro(erro);
       notificacao.erro(mensagem);
@@ -127,6 +116,7 @@ export function useAutenticacao() {
     // acoes com feedback
     entrar,
     cadastrar,
+    recuperarSenha,
     sair,
     excluirConta,
   };

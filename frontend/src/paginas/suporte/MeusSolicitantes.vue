@@ -239,7 +239,7 @@ onUnmounted(() => {
 /* ----- Grade de solicitantes ---------------------------------------------- */
 .grade-solicitantes {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   gap: var(--espaco-md);
 }
 

@@ -280,7 +280,10 @@ service cloud.firestore {
             && request.resource.data.lastMessageBy == 'support')
         );
 
-      allow delete: if eSuporte()
+      // Delete escopado: o suporte so apaga chamados das PROPRIAS sessoes
+      // (mesmo escopo do read, linha do allow read acima). O solicitante apaga
+      // apenas os proprios chamados ainda abertos (RN005/RN006).
+      allow delete: if (eSuporte() && resource.data.sessionSupportId == request.auth.uid)
         || (estaLogado()
           && resource.data.requesterId == request.auth.uid
           && resource.data.status == 'open');

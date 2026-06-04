@@ -6,13 +6,17 @@
 
 ## STATUS ATUAL DA SESSAO
 
-**Ultimo arquivo implementado:** FIX sino suporte — `DetalhesChamadoSuporte.vue` agora chama `marcarLido(id)` no `onMounted`. Bug: abrir chamado por fora do sino (lista "Todos os Chamados") nao baixava o badge; so o clique no sino (`aoAbrirItem`) marcava lido. Lado solicitante ja fazia isso (watch+`marcarVisto`); faltava o equivalente no suporte. Sem build (feedback do usuario).
+**Ultima atualizacao:** documentacao sincronizada em 2026-06-04 (`PlanoProximosPassos.md` + `ticketflow-especificacao-projeto.md`). Os docs agora refletem o estado real do codigo: paginas implementadas, escopo de suporte por sessao (`sessionSupportId`), chat em tempo real, notificacoes por perfil, historico client-side e autoexclusao.
 
-**Antes desse fix:** Central de notificacoes do SUPORTE (sino funcional). Antes o sino do CabecalhoApp era decorativo (sem handler/badge/painel) e chamado novo do solicitante so aparecia na lista, sem aviso. Agora: escuta dedicada de chamados ABERTOS sem responsavel (`observarChamadosAbertos`, query equality-only = sem indice), composable singleton `useNotificacaoSuporte` (lista `pendentes` + `quantidade`, toast "Novo chamado: ..." na chegada, semeia na 1a carga p/ nao avisar antigos), App.vue liga/desliga a escuta via `watch(ehSuporte)`, e o sino virou badge pulsante + dropdown (clica -> lista pendentes -> link p/ atendimento, fecha fora/Esc). So o suporte ve o sino. Sem build (feedback do usuario).  
-**Proximo passo imediato:** Etapa 12 — testes manuais ponta a ponta (cadastro/login solicitante+suporte, CRUD, assumir/status/responder/finalizar, guards, autoexclusao, responsividade). Pre-req: Auth email/senha ativado + Firestore DB criado + `firebase deploy --only firestore` (regras+indices; necessario p/ a nova regra de delete de perfil valer). Depois: revisar responsividade final, gerar build e deploy de hosting.  
-**Sessao atual:** 3 (2026-05-31)  
+**Ultima feature/fix de codigo:** autoexclusao pelo app + fix do sino do suporte. `DetalhesChamadoSuporte.vue` marca o chamado como lido ao abrir a tela; `PerfilUsuario.vue` permite excluir a propria conta apos reautenticacao, removendo tambem chamados abertos do solicitante.
 
-**>>> CHECKPOINT DE TESTE 1 disponivel:** com Auth(email/senha) ativado + regras Firestore deployadas, da pra testar TODO o fluxo do solicitante: cadastro/login -> painel -> novo chamado -> lista/filtros -> detalhes -> editar/cancelar/excluir.
+**Escopo real atual:** suporte nao consulta "todos os chamados do sistema" de forma global. Pela regra atual, suporte consulta apenas chamados vinculados as suas sessoes de atendimento (`tickets.sessionSupportId == uid do suporte`). Isso protege dados entre atendentes e combina com o fluxo de codigo de sessao.
+
+**Proximo passo imediato:** Etapa 12 - testes manuais ponta a ponta com Firebase real: cadastro/login solicitante+suporte, geracao/entrada em sessao, CRUD de chamados, chat, notificacoes, assumir/status/responder/finalizar, guards, autoexclusao e responsividade. Pre-req: Auth email/senha ativado + Firestore DB criado + `firebase deploy --only firestore` (regras+indices; necessario p/ regra de delete de perfil, sessoes, chat e historico valerem em producao). Depois: revisar responsividade final, gerar build e fazer deploy de hosting.
+
+**Sessao atual:** 4 (2026-06-04)
+
+**>>> CHECKPOINT DE TESTE DISPONIVEL:** com Auth(email/senha) ativado + regras Firestore deployadas, da para testar o fluxo completo: suporte cria/usa codigo de atendimento -> solicitante entra com codigo -> abre chamado -> suporte recebe aviso -> ambos conversam no chat -> suporte assume, responde, registra solucao e finaliza -> solicitante ve notificacao/resposta.
 
 **PLANO FREE (Spark) - CONFIG AJUSTADA:** projeto roda 100% no free usando Auth + Firestore + Hosting (+ Analytics opcional). Storage e Cloud Functions exigem Blaze para este escopo e foram REMOVIDOS do deploy em `firebase.json`. Codigo das Functions continua em `backend/funcoes/` como opcional Blaze-only, sem deploy. `configuracaoFirebase.js` nao usa Storage e `storage.rules` foi removido.
 
@@ -22,9 +26,9 @@
 3. Deploy SO do firestore quando for publicar regras: `firebase deploy --only firestore` a partir da raiz do projeto. NAO usar storage/functions no deploy.
 4. Fix aplicado: cadastro grava `usuario.email` (canonico) p/ casar com regra `email == auth.token.email`.
 
-**App roda de verdade agora:** localhost:5173. `/` -> /login (placeholder EmConstrucao). Guards ativos (rota protegida sem login redireciona p/ /login; perfil errado -> /nao-autorizado). Paginas reais ainda sao placeholders (rotas apontam p/ `componentes/comuns/EmConstrucao.vue`; trocar o `component` da rota ao implementar cada pagina).
+**App roda de verdade agora:** `/` -> `/login`, guards ativos, paginas reais importadas no router. Solicitante precisa vincular codigo de atendimento antes de acessar chamados; suporte acessa painel, chamados, urgentes, solicitantes e atendimento.
 
-**Servidor de desenvolvimento:** rodando via `npm run dev` em http://localhost:5173 (HMR ativo). App.vue = vitrine temporaria do design system.
+**Servidor de desenvolvimento:** nao iniciado nesta atualizacao de docs. Para rodar: `cd frontend && npm run dev` (Vite normalmente abre em http://localhost:5173).
 
 **MUDANCA DE TEMA (importante):** usuario enviou referencia real (TelaClaude.png) e o tema CLARO foi trocado por tema ESCURO "Twilight": fundo teal escuro (#16323a->#1d3f48), vidro escuro (rgba branco 0.06-0.09), acento ciano #45d3da com glow SUTIL (numeros + botao primario), status brilhantes. Tokens reescritos em variaveis.css; ajustes em tipografia/botoes/vidro. PENDENTE: texturas/imagens sutis em alguns cards (fase de componentes).
 
@@ -136,11 +140,18 @@
 | 3 (2026-05-31) | notificacao-suporte | `servicoChamado.js` + `useNotificacaoSuporte.js` (novo) + `App.vue` + `CabecalhoApp.vue` | FEATURE "sino nao avisava chamado novo": sino era decorativo. Add `observarChamadosAbertos` (where status==open, equality -> sem indice), composable singleton `useNotificacaoSuporte` (pendentes=abertos sem responsavel, quantidade, toast na chegada, 1a carga so semeia), App.vue liga/desliga via `watch(ehSuporte)`, sino com badge pulsante + dropdown (link p/ suporte-detalhes-chamado, fecha fora/Esc). Removida regra orfa `.topbar-acao{display:none}` (mobile). So suporte ve o sino. Pendente: testar com Firestore real |
 | 3 (2026-05-31) | fix-sino-suporte | `paginas/suporte/DetalhesChamadoSuporte.vue` | FIX "abrir chamado fora do sino nao baixa o badge": so o clique no sino (`CabecalhoApp.aoAbrirItem` -> `notifSuporte.marcarLido(id)`) marcava lido; abrir pela lista "Todos os Chamados" nao. CAUSA RAIZ: a tela de atendimento nunca chamava `marcarLido`. Fix: importa `useNotificacaoSuporte`, chama `marcarLido(id.value)` no `onMounted` (so precisa do id, nao do objeto). Simetrico ao lado solicitante (que ja limpava via watch+`marcarVisto`). Sem build |
 | 3 (2026-05-31) | autoexclusao (opcao A) | `firestore.rules` + `servicoUsuario.js` + `servicoChamado.js` + `servicoAutenticacao.js` + `storeAutenticacao.js` + `useAutenticacao.js` + `PerfilUsuario.vue` | FIX "deletar usuario no Console Auth deixa doc em `users` orfao": Firebase nao cascateia, e plano Spark/free nao roda Cloud Function `onUserDeleted` (Blaze). Solucao: autoexclusao PELO APP. Fluxo na PaginaPerfil (zona de perigo + modal de senha): reautentica -> apaga chamados ABERTOS do user -> apaga doc `users/{uid}` -> `deleteUser(auth)` -> redirect /login. Ordem critica: Firestore ANTES do Auth (perde permissao apos). Chamados nao-abertos preservados como historico (regra proibe solicitante apagar nao-aberto, RN005/RN006). Regra `users` delete: `if false` -> `if eDono(userId)`. Build OK. PENDENTE: `firebase deploy --only firestore` p/ a regra de delete valer em producao (criar Firestore DB antes) |
+| 4 (2026-06-04) | docs | `PlanoProximosPassos.md` + `ticketflow-especificacao-projeto.md` | Documentacao sincronizada com o codigo atual: remove status antigos de placeholder/pendente, registra escopo por sessao (`sessionSupportId`), chat em `tickets/{id}/mensagens`, historico em `tickets/{id}/historico`, notificacoes de suporte/solicitante, autoexclusao e proximos passos reais de teste/deploy. Sem build (docs only) |
+| 4 (2026-06-04) | bugfix-seg | `backend/firebase/regras/firestore.rules` | FIX over-permissao no delete de chamado: `allow delete` do suporte era global (`if eSuporte()`) -> qualquer suporte apagava chamado de OUTRA sessao, inconsistente com o `allow read` que ja e escopado por `sessionSupportId`. Corrigido para `eSuporte() && resource.data.sessionSupportId == request.auth.uid`. Solicitante segue apagando so os proprios abertos. PENDENTE: `firebase deploy --only firestore` p/ valer em producao |
+| 4 (2026-06-04) | refactor (#7) | `utils/errorHandler.js` (novo) + `composables/useAutenticacao.js` | Tradutor de erro Firebase->PT extraido de `useAutenticacao` para util reutilizavel `errorHandler.js` (RNF010, recomendado pela spec sec.20). `useAutenticacao` agora importa `traduzirErro`/`MENSAGENS_ERRO` do util. Add codigo `auth/missing-email` p/ recuperacao de senha |
+| 4 (2026-06-04) | feature (#5) | `servicos/servicoAutenticacao.js` + `composables/useAutenticacao.js` + `paginas/publicas/PaginaLogin.vue` | FEATURE recuperacao de senha (spec sec.29 extra): `recuperarSenha(email)` via `sendPasswordResetEmail`; wrapper no composable com feedback neutro (nao revela se e-mail existe); link "Esqueci minha senha" no login reusa o e-mail digitado, valida formato e dispara o envio. Estilo do link no tema Twilight |
+| 4 (2026-06-04) | testes (#6) | `frontend/package.json` + `utils/__tests__/*.test.js` (3 novos) | Setup Vitest (devDep + scripts `test`/`test:run`) + testes unitarios dos utils puros: `validarEmail`, `ordenarChamados` (ordem + nao-mutacao + desempate por prioridade), `formatarData` (paraData/relativa/fallbacks). PRE-REQ p/ rodar: `npm install` (instala vitest) e depois `npm test`. NAO rodado nesta sessao (politica sem build automatico). Reset de senha (#5) testado manualmente pelo usuario: OK |
+| 4 (2026-06-04) | perf (#8) | `composables/useNotificacaoSuporte.js` + `stores/storeChamado.js` + `servicos/servicoChamado.js` | FIX 2 listeners na mesma query do suporte: o sino (`useNotificacaoSuporte`, escuta `sessionSupportId == uid`) e os paineis (`storeChamado.escutarTodos`, que abria um 2o `onSnapshot` com orderBy) liam a MESMA colecao em paralelo. Agora o singleton do sino e a FONTE UNICA: expoe `todos` (lista crua) + `carregado`; `escutarTodos` espelha via `watch` e ordena no cliente (`ordenarPorMaisRecente`). Resultado: 1 escuta do Firestore p/ o suporte (metade das leituras), dispensa indice composto no runtime. Removido `observarChamadosDoSuporte` (orfao). Paginas inalteradas (seguem lendo `store.chamados`). Sem build |
+| 4 (2026-06-04) | responsivo (#10) | `paginas/suporte/MeusSolicitantes.vue` | REVISAO de responsividade (item [~] do checklist). Auditado: viewport OK, drawer a 1100px, camada `estilos/telamobile/*` completa (header stacking, botoes full-width, collapse de grids, overflow-wrap em texto longo, modal bottom-sheet, anti-zoom iOS, perfil/404), todos os `NNNpx` sao `max-width` (nao vazam). Unico gap: `.grade-solicitantes` usava `minmax(280px,1fr)` sem guarda e nao estava na camada mobile -> overflow horizontal em tela <300px. Fix p/ `minmax(min(100%,280px),1fr)` (mesmo padrao de ResumoPainel/FiltrosChamados). Falta so validacao em dispositivo real |
 
 **Notas tecnicas da sessao 1:**
 - Constantes usam as chaves = valores exatos do Firestore (open/in_progress/...; low/medium/...; requester/support). Cores apontam para tokens CSS (`var(--cor-...)`) que serao definidos em `variaveis.css`.
 - Constantes + utils testados via Node ESM (smoke test): todas as funcoes retornaram o esperado.
-- DECISAO PENDENTE de design: tokens de cor do design (soft glassmorphism) ja definidos na memoria do projeto; serao escritos em `variaveis.css` na proxima etapa.
+- DECISAO DE DESIGN APLICADA: tokens do tema escuro Twilight foram escritos em `variaveis.css` e usados pelos componentes. Pendente apenas revisao visual/responsiva final.
 - Functions usam API v2 do firebase-functions (v7.2.5) e CommonJS (`require`), conforme `package.json` (`"type": "commonjs"`).
 - Sintaxe das 3 functions validada com `node -c`. JSON de indices validado.
 - Deploy das Functions exige plano Blaze. A seguranca essencial nao depende delas — esta nas `firestore.rules`.
@@ -169,7 +180,7 @@ A aplicacao deve permitir que usuarios abram chamados, acompanhem o atendimento 
 O sistema tera dois perfis principais:
 
 - Solicitante: cria chamados, acompanha os proprios chamados, edita ou exclui chamados abertos.
-- Suporte: visualiza todos os chamados, assume atendimentos, altera status, responde, registra solucao e finaliza chamados.
+- Suporte: visualiza chamados vinculados as proprias sessoes, assume atendimentos, altera status, conversa no chat, responde, registra solucao e finaliza chamados.
 
 O projeto atende a proposta academica porque usa Vue.js, Firebase Authentication, Cloud Firestore, rotas protegidas, CRUD completo e uma proposta diferente de um CRUD generico.
 
@@ -189,13 +200,15 @@ Estado atual:
 
 - Vue, Vite e plugin Vue estao instalados no `frontend/`.
 - A estrutura de pastas do frontend esta organizada.
-- Os arquivos principais ainda estao vazios e precisam ser implementados.
+- O app esta implementado com Vue 3 + Composition API, Vue Router, Pinia e Firebase SDK.
+- Existem telas reais para login/cadastro, painel do solicitante, painel do suporte, listas, detalhes, atendimento, perfil, 403 e 404.
+- Layout interno, componentes comuns, componentes de chamados, toasts, tema Twilight e responsividade base ja estao implementados.
 
 Status:
 
 - Estrutura: pronta.
-- Implementacao visual: pendente.
-- Responsividade: pendente.
+- Implementacao visual: pronta.
+- Responsividade: implementada em base; pendente apenas revisao final em dispositivos reais.
 
 ---
 
@@ -213,20 +226,22 @@ Estado atual:
 
 - Firebase SDK esta instalado no frontend.
 - `frontend/src/firebase/configuracaoFirebase.js` inicializa Firebase App, Auth, Firestore e Analytics opcional. Storage nao faz parte do escopo Spark/free.
-- Existem arquivos planejados para autenticacao:
+- Fluxo de autenticacao implementado em:
   - `frontend/src/servicos/servicoAutenticacao.js`
   - `frontend/src/composables/useAutenticacao.js`
   - `frontend/src/stores/storeAutenticacao.js`
   - `frontend/src/paginas/publicas/PaginaLogin.vue`
   - `frontend/src/paginas/publicas/PaginaCadastro.vue`
+- Perfil do usuario implementa logout e autoexclusao com reautenticacao por senha.
 
 Status:
 
 - Configuracao Firebase: pronta.
-- Cadastro: pendente.
-- Login: pendente.
-- Logout: pendente.
-- Guards de rota: pendente.
+- Cadastro: implementado.
+- Login: implementado.
+- Logout: implementado.
+- Guards de rota: implementados.
+- Autoexclusao: implementada no app; depende de deploy das regras Firestore para producao.
 
 ---
 
@@ -243,10 +258,14 @@ Requisitos:
 Estado atual:
 
 - Firestore esta disponivel no frontend via `db`, exportado por `configuracaoFirebase.js`.
-- Existem arquivos planejados para os chamados:
+- Chamados, sessoes, chat e historico estao implementados em:
   - `frontend/src/servicos/servicoChamado.js`
+  - `frontend/src/servicos/servicoSessao.js`
   - `frontend/src/composables/useChamados.js`
+  - `frontend/src/composables/useChat.js`
+  - `frontend/src/composables/useSessao.js`
   - `frontend/src/stores/storeChamado.js`
+  - `frontend/src/stores/storeSessao.js`
   - `backend/firebase/regras/firestore.rules`
   - `backend/firebase/indices/firestore.indexes.json`
 
@@ -254,8 +273,11 @@ Status:
 
 - Configuracao do Firestore no app: pronta.
 - Regras do Firestore: implementadas localmente.
-- CRUD de chamados: pendente.
-- Consultas por perfil: pendente.
+- CRUD de chamados: implementado.
+- Consultas por perfil: implementadas com escopo real por sessao.
+- Chat (`tickets/{id}/mensagens`): implementado.
+- Historico (`tickets/{id}/historico`): implementado client-side.
+- Deploy de regras/indices: pendente em producao.
 
 ---
 
@@ -310,7 +332,9 @@ src/
 Estado atual:
 
 - A estrutura foi restaurada.
-- Os arquivos de aplicacao estao vazios, exceto `src/firebase/configuracaoFirebase.js`.
+- Os arquivos de aplicacao estao implementados.
+- O router importa paginas reais, e nao placeholders.
+- O fluxo de sessao por codigo, chamados, chat, notificacoes e perfil esta distribuido entre `servicos/`, `stores/`, `composables/`, `paginas/` e `componentes/`.
 - Os arquivos gerados pelo Vite e pelo npm permanecem com conteudo normal.
 
 Dependencias instaladas no frontend:
@@ -376,8 +400,8 @@ Estado atual:
 - `.firebaserc` da raiz aponta para o projeto `projetoticketflow`.
 - `firebase.json` da raiz e a fonte para deploy Spark/free com Firestore e Hosting.
 - `backend/firebase/firebase.json` fica apenas como config auxiliar de Firestore; Hosting deve ser deployado pela raiz.
-- `firestore.indexes.json` existe e esta valido, ainda sem indexes customizados.
-- `firestore.rules` esta vazio.
+- `firestore.indexes.json` existe e possui indexes compostos para consultas por solicitante, status, prioridade e suporte por sessao.
+- `firestore.rules` esta implementado para `users`, `tickets`, subcolecoes `historico`/`mensagens` e `sessoes`.
 - `storage.rules` foi removido do escopo Spark/free.
 
 Hosting configurado:
@@ -419,7 +443,8 @@ Estado atual:
 - `firebase-admin` instalado.
 - `firebase-functions` instalado.
 - `main` do `package.json` aponta para `src/index.js`.
-- Arquivos `index.js`, `chamados.js` e `usuarios.js` ainda estao vazios.
+- Arquivos de Functions existem como apoio/alternativa Blaze-only, mas nao entram no deploy Spark/free atual.
+- Historico e chat do app atual sao gravados pelo cliente com regras Firestore, sem depender de Cloud Functions.
 
 Dependencias instaladas no backend:
 
@@ -430,7 +455,7 @@ firebase-functions
 
 ---
 
-## 4. Modelo de dados planejado
+## 4. Modelo de dados atual
 
 ### 4.1 Colecao `users`
 
@@ -468,6 +493,10 @@ tickets/{ticketId}
   requesterId: string
   requesterName: string
   requesterEmail: string
+  sessionId: string
+  sessionSupportId: string
+  lastMessageAt: timestamp | null
+  lastMessageBy: "requester" | "support" | null
   assignedToId: string | null
   assignedToName: string | null
   supportResponse: string | null
@@ -482,11 +511,58 @@ Finalidade:
 
 - Registrar os chamados abertos pelos solicitantes.
 - Permitir consulta, edicao, atualizacao de status, resposta e finalizacao.
+- Amarrar cada chamado ao suporte da sessao (`sessionSupportId`), evitando leitura global entre suportes.
+- Alimentar notificacoes de chat com `lastMessageAt`/`lastMessageBy`.
 - Cumprir o CRUD completo exigido pelo professor.
 
 ---
 
-## 5. Rotas planejadas
+### 4.3 Colecao `sessoes`
+
+```txt
+sessoes/{codigo}
+  codigo: string
+  suporteId: string
+  suporteNome: string
+  ativo: boolean
+  criadoEm: timestamp
+```
+
+Finalidade:
+
+- Permitir que o suporte gere um codigo de atendimento.
+- Permitir que o solicitante entre com esse codigo antes de abrir chamados.
+- Definir qual suporte enxerga os chamados daquele atendimento.
+
+---
+
+### 4.4 Subcolecoes de `tickets`
+
+```txt
+tickets/{ticketId}/mensagens/{mensagemId}
+  autorId: string
+  autorNome: string
+  autorPapel: "requester" | "support"
+  texto: string
+  criadoEm: timestamp
+
+tickets/{ticketId}/historico/{historicoId}
+  acao: string
+  statusAnterior: string | null
+  statusNovo: string | null
+  autorId: string
+  autorNome: string
+  criadoEm: timestamp
+```
+
+Finalidade:
+
+- `mensagens`: conversa em tempo real entre solicitante e suporte.
+- `historico`: trilha de auditoria criada pelo cliente no plano Spark/free.
+
+---
+
+## 5. Rotas atuais
 
 Rotas publicas:
 
@@ -498,9 +574,11 @@ Rotas publicas:
 Rotas do solicitante:
 
 ```txt
+/solicitante/sessao
 /solicitante/painel
 /solicitante/chamados
 /solicitante/chamados/novo
+/solicitante/chamados/:id/editar
 /solicitante/chamados/:id
 ```
 
@@ -510,6 +588,7 @@ Rotas do suporte:
 /suporte/painel
 /suporte/chamados
 /suporte/chamados/urgentes
+/suporte/solicitantes
 /suporte/chamados/:id
 ```
 
@@ -531,6 +610,7 @@ Regras esperadas:
 - Usuario nao autenticado nao acessa rotas internas.
 - Perfil `requester` acessa apenas area de solicitante.
 - Perfil `support` acessa area de suporte.
+- Solicitante sem sessao ativa vai para `/solicitante/sessao`.
 - Apos login, redirecionar conforme perfil.
 
 ---
@@ -553,7 +633,7 @@ O que implementar:
 - Permitir que solicitante crie chamados com o proprio UID.
 - Permitir que solicitante leia apenas os proprios chamados.
 - Permitir que solicitante edite ou exclua apenas chamados proprios e abertos.
-- Permitir que suporte leia todos os chamados.
+- Permitir que suporte leia chamados vinculados as proprias sessoes (`sessionSupportId`).
 - Permitir que suporte atualize status, resposta, solucao e responsavel.
 
 Resultado esperado:
@@ -610,7 +690,7 @@ O que implementar:
 - Busca do perfil do usuario.
 - Criacao de chamado.
 - Listagem dos chamados do solicitante.
-- Listagem de todos os chamados para suporte.
+- Listagem dos chamados vinculados ao suporte.
 - Atualizacao de chamado.
 - Exclusao de chamado aberto.
 - Atualizacao de status/resposta/solucao pelo suporte.
@@ -796,7 +876,7 @@ frontend/src/componentes/chamados/
 O que implementar:
 
 - Dashboard com resumo geral.
-- Listagem de todos os chamados.
+- Listagem dos chamados vinculados ao suporte.
 - Filtros por status, prioridade e categoria.
 - Tela de detalhes.
 - Assumir chamado.
@@ -877,10 +957,14 @@ O que validar:
 ### Backend/Firebase
 
 - [x] Regras do Firestore
-- [x] Regras do Storage
+- [x] Storage removido do escopo Spark/free
 - [x] Indexes necessarios do Firestore
 - [x] Functions opcionais
-- [ ] Scripts de dados de teste
+- [x] Scripts de dados de teste
+- [x] Regras para sessoes de atendimento
+- [x] Regras para chat de chamado
+- [x] Regras para historico de chamado
+- [ ] Deploy de regras/indices em producao
 
 ### Base do frontend
 
@@ -907,17 +991,23 @@ O que validar:
 
 - [x] Servico de chamados
 - [x] Store de chamados
+- [x] Sessao de atendimento por codigo
 - [x] Criar chamado
 - [x] Listar meus chamados
 - [x] Ver detalhes
 - [x] Editar chamado aberto
 - [x] Excluir chamado aberto
-- [x] Listar todos os chamados para suporte
+- [x] Listar chamados vinculados ao suporte
 - [x] Assumir chamado
 - [x] Atualizar status
 - [x] Responder chamado
 - [x] Registrar solucao
 - [x] Finalizar chamado
+- [x] Chat em tempo real por chamado
+- [x] Historico/timeline do chamado
+- [x] Notificacao para suporte
+- [x] Notificacao para solicitante
+- [x] Autoexclusao de conta pelo app
 
 ### Interface
 
@@ -930,7 +1020,7 @@ O que validar:
 - [x] Paginas do solicitante
 - [x] Paginas do suporte
 - [x] Paginas compartilhadas
-- [~] Responsividade (layout/componentes ja responsivos; revisar no fim)
+- [x] Responsividade (auditada no codigo + 1 fix em `.grade-solicitantes`; falta so validar em dispositivo real)
 - [x] Feedback visual de erro, loading e sucesso (toasts + EstadoCarregamento/Vazio)
 
 ---
@@ -946,20 +1036,26 @@ O projeto pode ser considerado pronto quando:
 - O sistema diferencia `requester` e `support`.
 - Rotas protegidas funcionam.
 - Rotas por perfil funcionam.
+- Suporte gera/usa codigo de atendimento.
+- Solicitante entra com codigo antes de abrir chamado.
 - Solicitante cria chamado.
 - Solicitante ve apenas os proprios chamados.
 - Solicitante edita e exclui chamados abertos.
-- Suporte ve todos os chamados.
+- Suporte ve chamados vinculados as proprias sessoes.
 - Suporte assume chamados.
 - Suporte atualiza status.
+- Chat funciona entre solicitante e suporte.
+- Notificacoes aparecem para suporte e solicitante.
 - Suporte responde chamados.
 - Suporte registra solucao.
 - Suporte finaliza chamados.
+- Autoexclusao remove conta e chamados abertos sem deixar perfil orfao.
 - Dados persistem corretamente no Firestore.
 - Interface e responsiva.
 - Projeto pode ser executado localmente.
 - Build do frontend funciona.
-- Hosting esta pronto para deploy.
+- Firestore rules/indexes estao deployados.
+- Hosting esta pronto para deploy/deployado.
 
 ---
 
@@ -993,6 +1089,13 @@ cd TicketFlow
 firebase deploy --only hosting:projetoticketflow-c3b5c
 ```
 
+Deploy somente do Firestore:
+
+```bash
+cd TicketFlow
+firebase deploy --only firestore
+```
+
 Deploy completo do Firebase configurado no Spark/free:
 
 ```bash
@@ -1004,16 +1107,21 @@ firebase deploy
 
 ## 10. Proximo passo imediato
 
-O proximo passo recomendado e implementar:
+O proximo passo recomendado e validar o app em Firebase real:
 
-```txt
-backend/firebase/regras/firestore.rules
-```
+1. Criar Firestore Database no Console (Native mode), se ainda nao existir.
+2. Ativar Authentication -> E-mail/Senha.
+3. Rodar `firebase deploy --only firestore` a partir da raiz.
+4. Rodar `cd frontend && npm run dev`.
+5. Testar ponta a ponta:
+   - cadastro/login de suporte;
+   - geracao de codigo de atendimento;
+   - cadastro/login de solicitante;
+   - entrada do solicitante com codigo;
+   - criacao/listagem/edicao/exclusao de chamado aberto;
+   - notificacao de novo chamado para suporte;
+   - atendimento com assumir, status, chat, resposta, solucao e finalizacao;
+   - notificacao de resposta/mensagem para solicitante;
+   - guards de rota e autoexclusao.
 
-Motivo:
-
-- As regras de seguranca sao a base do backend no Firebase.
-- Elas protegem os dados antes da criacao das telas.
-- Elas garantem que o controle por perfil nao fique apenas no front-end.
-
-Depois disso, a ordem natural e implementar as constantes e os servicos Firebase do frontend.
+Depois dos testes manuais: revisar responsividade final, gerar `npm run build` e fazer deploy do hosting.

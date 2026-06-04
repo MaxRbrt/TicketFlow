@@ -9,6 +9,7 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut,
   onAuthStateChanged,
   updateProfile,
@@ -66,6 +67,18 @@ export async function cadastrar({ nome, email, senha, perfil, departamento }) {
 export async function entrar(email, senha) {
   const credencial = await signInWithEmailAndPassword(auth, email, senha);
   return credencial.user;
+}
+
+/**
+ * Envia um e-mail de redefinicao de senha para o endereco informado. O Firebase
+ * cuida do fluxo (link com token e tela de nova senha). Normaliza o e-mail para
+ * minusculas/sem espacos, como no cadastro.
+ *
+ * @param {string} email - E-mail da conta.
+ */
+export async function recuperarSenha(email) {
+  const emailNormalizado = (email || "").trim().toLowerCase();
+  await sendPasswordResetEmail(auth, emailNormalizado);
 }
 
 /**

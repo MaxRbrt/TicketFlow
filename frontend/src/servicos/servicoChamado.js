@@ -183,33 +183,13 @@ export function observarChamadosDoSolicitante(requesterId, aoAtualizar, aoErro) 
 }
 
 /**
- * Observa em tempo real os chamados das sessoes de um suporte (painel de
- * suporte). Escopo por `sessionSupportId`: o suporte so ve os chamados dos
- * solicitantes que entraram com um dos seus codigos de sessao.
- * @param {string} suporteId - UID do suporte.
- * @param {(chamados: object[]) => void} aoAtualizar - Recebe a lista atualizada.
- * @param {(erro: Error) => void} [aoErro] - Callback de erro opcional.
- * @returns {import("firebase/firestore").Unsubscribe} Cancela a escuta.
- */
-export function observarChamadosDoSuporte(suporteId, aoAtualizar, aoErro) {
-  const consulta = query(
-    colecaoChamados,
-    where("sessionSupportId", "==", suporteId),
-    orderBy("createdAt", "desc")
-  );
-  return onSnapshot(
-    consulta,
-    (snap) => aoAtualizar(snap.docs.map(paraChamado)),
-    aoErro
-  );
-}
-
-/**
- * Observa em tempo real os chamados de um suporte para a central de
- * notificacoes (avisa de chamados novos aguardando atendimento). Consulta
- * apenas por `sessionSupportId` (uma igualdade, sem orderBy), logo nao exige
- * indice composto; a filtragem por status `open`/sem responsavel e a ordenacao
- * ficam no front-end.
+ * Observa em tempo real TODOS os chamados das sessoes de um suporte (escopo por
+ * `sessionSupportId`: so os chamados dos solicitantes que entraram com um dos
+ * seus codigos). Fonte UNICA do suporte: alimenta tanto o sino de notificacoes
+ * (`useNotificacaoSuporte`) quanto os paineis (via `storeChamado.escutarTodos`,
+ * que espelha esta lista e ordena no cliente). Consulta apenas por igualdade
+ * (sem orderBy), logo nao exige indice composto; a filtragem por status e a
+ * ordenacao ficam no front-end.
  * @param {string} suporteId - UID do suporte.
  * @param {(chamados: object[]) => void} aoAtualizar - Recebe a lista atualizada.
  * @param {(erro: Error) => void} [aoErro] - Callback de erro opcional.

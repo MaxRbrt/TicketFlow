@@ -7,10 +7,9 @@
 // ============================================================================
 
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import {
   observarChamadosDoSolicitante,
-  observarChamadosDoSuporte,
   observarChamado,
   criarChamado,
   atualizarChamado,
@@ -20,6 +19,8 @@ import {
   registrarSolucao,
   excluirChamado,
 } from "../servicos/servicoChamado.js";
+import { useNotificacaoSuporte } from "../composables/useNotificacaoSuporte.js";
+import { ordenarPorMaisRecente } from "../utils/ordenarChamados.js";
 import { STATUS } from "../constantes/statusChamado.js";
 import { PRIORIDADE } from "../constantes/prioridadesChamado.js";
 
@@ -101,21 +102,34 @@ export const useStoreChamado = defineStore("chamado", () => {
 
   /**
    * Escuta em tempo real os chamados das sessoes do suporte (painel de suporte).
+   *
+   * Em vez de abrir um 2o `onSnapshot` na mesma query do sino
+   * (`useNotificacaoSuporte`, que ja escuta `sessionSupportId == uid`), espelha
+   * a lista desse singleton e ordena no cliente. Beneficios: 1 unica escuta do
+   * Firestore para o suporte (metade das leituras) e dispensa o indice composto
+   * `sessionSupportId + createdAt`.
+   *
    * @param {string} suporteId - UID do suporte logado.
    */
   function escutarTodos(suporteId) {
     pararEscutaLista();
-    carregando.value = true;
     erro.value = null;
-    cancelarLista = observarChamadosDoSuporte(
-      suporteId,
-      (lista) => {
-        chamados.value = lista;
-        carregando.value = false;
-      },
-      (e) => {
-        erro.value = e;
-        carregando.value = false;
+
+    const notif = useNotificacaoSuporte();
+    // Garante a escuta unica ligada (idempotente; o App.vue ja liga no login).
+    notif.iniciar(suporteId);
+
+    // `carregando` so enquanto a 1a leitura nao chegou.
+    carregando.value = !notif.carregado.value;
+    chamados.value = ordenarPorMaisRecente(notif.todos.value);
+
+    // Espelha cada atualizacao da fonte unica. O stop do watch vira o
+    // `cancelarLista` (compativel com pararEscutaLista, que o chama como funcao).
+    cancelarLista = watch(
+      [notif.todos, notif.carregado],
+      ([lista, carregado]) => {
+        chamados.value = ordenarPorMaisRecente(lista);
+        carregando.value = !carregado;
       }
     );
   }

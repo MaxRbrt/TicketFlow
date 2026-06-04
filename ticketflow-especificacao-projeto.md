@@ -48,8 +48,8 @@ O projeto deve atender aos seguintes pontos:
 | Controle de acesso | Usuários não autenticados não acessam páginas internas. Solicitantes e suporte terão áreas diferentes. |
 | Firestore | Chamados, usuários e dados operacionais serão salvos no Cloud Firestore. |
 | Inserir dados | O solicitante cria chamados; usuários são cadastrados. |
-| Consultar dados | Solicitantes consultam seus chamados; suporte consulta todos os chamados. |
-| Atualizar dados | O solicitante pode editar chamados abertos; o suporte atualiza status, resposta e solução. |
+| Consultar dados | Solicitantes consultam seus chamados; suporte consulta os chamados vinculados às suas sessões de atendimento. |
+| Atualizar dados | O solicitante pode editar chamados abertos; o suporte atualiza status, conversa no chat, registra resposta e solução. |
 | Excluir dados | O solicitante pode excluir chamados abertos; o suporte pode excluir ou arquivar chamados conforme regra definida. |
 | Criatividade | A proposta simula um sistema real de atendimento e suporte, com dois perfis e fluxo de resolução. |
 
@@ -61,7 +61,7 @@ O objetivo do TicketFlow é organizar a comunicação entre pessoas que precisam
 
 Em vez de problemas serem enviados por WhatsApp, conversas informais, e-mail perdido ou mensagens sem controle, o sistema centraliza tudo em um painel único.
 
-O solicitante pode abrir um chamado informando o problema, acompanhar o andamento e visualizar a resposta do suporte. Já a equipe de suporte pode visualizar todos os chamados, filtrar por prioridade ou status, assumir atendimentos, responder e finalizar chamados.
+O solicitante pode abrir um chamado informando o problema, acompanhar o andamento, conversar com o suporte e visualizar a resposta. Já a equipe de suporte pode visualizar os chamados vinculados às suas sessões de atendimento, filtrar por prioridade ou status, assumir atendimentos, conversar, responder e finalizar chamados.
 
 ---
 
@@ -137,11 +137,12 @@ O suporte é o usuário responsável por atender os chamados. Pode representar u
 ### Responsabilidades do suporte
 
 - Fazer login.
-- Visualizar todos os chamados.
+- Visualizar os chamados vinculados às próprias sessões de atendimento.
 - Filtrar chamados por status, prioridade ou categoria.
 - Acessar detalhes de cada chamado.
 - Assumir um chamado.
 - Alterar status do chamado.
+- Conversar com o solicitante pelo chat do chamado.
 - Registrar resposta ao solicitante.
 - Registrar solução aplicada.
 - Finalizar chamados.
@@ -164,12 +165,13 @@ O suporte é o usuário responsável por atender os chamados. Pode representar u
 2. Caso não tenha conta, realiza cadastro.
 3. Caso já tenha conta, realiza login.
 4. O sistema identifica que o perfil é **solicitante**.
-5. O usuário é redirecionado para o painel **Meus Chamados**.
-6. O usuário cria um novo chamado.
-7. O chamado é salvo no Firestore com status inicial **Aberto**.
-8. O usuário acompanha o status do chamado.
-9. O suporte responde ou altera o status.
-10. O usuário visualiza a resposta e a solução.
+5. Se ainda não estiver vinculado, o usuário informa o código de atendimento gerado pelo suporte.
+6. O usuário é redirecionado para o painel **Meus Chamados**.
+7. O usuário cria um novo chamado.
+8. O chamado é salvo no Firestore com status inicial **Aberto** e vinculado ao suporte da sessão.
+9. O usuário acompanha o status do chamado e conversa pelo chat.
+10. O suporte responde, envia mensagem ou altera o status.
+11. O usuário recebe notificação e visualiza a resposta e a solução.
 
 ---
 
@@ -179,13 +181,15 @@ O suporte é o usuário responsável por atender os chamados. Pode representar u
 2. Realiza login com e-mail e senha.
 3. O sistema identifica que o perfil é **suporte**.
 4. O usuário é redirecionado para o painel **Atendimento**.
-5. O suporte visualiza todos os chamados.
-6. O suporte escolhe um chamado aberto.
-7. O suporte assume o chamado.
-8. O status muda para **Em andamento**.
-9. O suporte adiciona uma resposta ou observação.
-10. O suporte registra a solução aplicada.
-11. O chamado é finalizado como **Resolvido**.
+5. O suporte gera ou reutiliza um código de atendimento.
+6. Solicitantes entram com esse código e os chamados passam a ficar vinculados ao suporte.
+7. O suporte visualiza os chamados das próprias sessões.
+8. O suporte escolhe um chamado aberto.
+9. O suporte assume o chamado.
+10. O status muda para **Em andamento**.
+11. O suporte conversa, adiciona uma resposta ou observação.
+12. O suporte registra a solução aplicada.
+13. O chamado é finalizado como **Resolvido**.
 
 ---
 
@@ -427,9 +431,9 @@ Alternativa aceitável: em vez de excluir fisicamente, o sistema pode cancelar o
 
 ## 11.3 Chamados do suporte
 
-### RF012 — Listar todos os chamados
+### RF012 — Listar chamados vinculados ao suporte
 
-O usuário com perfil de suporte deve visualizar todos os chamados cadastrados no sistema.
+O usuário com perfil de suporte deve visualizar os chamados vinculados às suas sessões de atendimento.
 
 A listagem deve exibir:
 
@@ -711,9 +715,9 @@ Um usuário solicitante não pode visualizar chamados criados por outros usuári
 
 ---
 
-### RN004 — Suporte visualiza todos os chamados
+### RN004 — Suporte visualiza chamados das próprias sessões
 
-Usuários com perfil de suporte podem consultar todos os chamados cadastrados.
+Usuários com perfil de suporte podem consultar os chamados cujo `sessionSupportId` seja o UID do próprio suporte.
 
 ---
 
@@ -751,8 +755,8 @@ Toda exclusão de chamado deve pedir confirmação antes de executar a ação.
 
 Após login:
 
-- Solicitante vai para `/solicitante/dashboard`.
-- Suporte vai para `/suporte/dashboard`.
+- Solicitante vai para `/solicitante/painel`, ou para `/solicitante/sessao` se ainda não tiver código ativo.
+- Suporte vai para `/suporte/painel`.
 
 ---
 
@@ -773,7 +777,7 @@ Após login:
 | Rota | Página | Acesso | Descrição |
 |---|---|---|---|
 | `/perfil` | Perfil do usuário | Solicitante e suporte | Mostra dados básicos da conta. |
-| `/chamados/:id` | Detalhes do chamado | Conforme permissão | Exibe detalhes do chamado. |
+| `/nao-autorizado` | Acesso negado | Solicitante e suporte | Exibida quando o perfil tenta acessar área indevida. |
 
 ---
 
@@ -781,10 +785,12 @@ Após login:
 
 | Rota | Página | Descrição |
 |---|---|---|
-| `/solicitante/dashboard` | Dashboard do solicitante | Resumo dos chamados do usuário. |
+| `/solicitante/sessao` | Conectar ao suporte | Entrada do código de atendimento gerado pelo suporte. |
+| `/solicitante/painel` | Dashboard do solicitante | Resumo dos chamados do usuário. |
 | `/solicitante/chamados` | Meus chamados | Lista de chamados criados pelo usuário. |
 | `/solicitante/chamados/novo` | Novo chamado | Formulário para abrir chamado. |
 | `/solicitante/chamados/:id/editar` | Editar chamado | Edição de chamado aberto. |
+| `/solicitante/chamados/:id` | Detalhes do chamado | Detalhes, histórico e chat do chamado para o solicitante. |
 
 ---
 
@@ -792,8 +798,9 @@ Após login:
 
 | Rota | Página | Descrição |
 |---|---|---|
-| `/suporte/dashboard` | Dashboard do suporte | Visão geral dos chamados do sistema. |
-| `/suporte/chamados` | Todos os chamados | Lista completa para atendimento. |
+| `/suporte/painel` | Dashboard do suporte | Visão geral dos chamados das sessões do suporte. |
+| `/suporte/chamados` | Todos os chamados | Lista dos chamados vinculados às sessões do suporte logado. |
+| `/suporte/solicitantes` | Meus solicitantes | Agrupamento dos solicitantes que abriram chamados nas sessões do suporte. |
 | `/suporte/chamados/:id` | Atendimento do chamado | Tela para assumir, responder e finalizar chamado. |
 
 ---
@@ -1009,7 +1016,7 @@ Dar à equipe de suporte uma visão geral dos chamados do sistema.
 
 ### Ações
 
-- Ver todos os chamados
+- Ver chamados vinculados ao suporte
 - Filtrar chamados urgentes
 - Abrir detalhes de atendimento
 
@@ -1025,7 +1032,7 @@ Dar à equipe de suporte uma visão geral dos chamados do sistema.
 
 ### Objetivo
 
-Permitir que o suporte consulte e organize todos os chamados.
+Permitir que o suporte consulte e organize os chamados vinculados às suas sessões de atendimento.
 
 ### Informações exibidas
 
@@ -1116,7 +1123,7 @@ Cada documento representa um usuário da aplicação.
 
 O ID do documento deve ser o mesmo UID do Firebase Authentication.
 
-### Campos sugeridos
+### Campos atuais
 
 ```txt
 users/{uid}
@@ -1142,7 +1149,7 @@ users/{uid}
 
 Cada documento representa um chamado.
 
-### Campos sugeridos
+### Campos atuais
 
 ```txt
 tickets/{ticketId}
@@ -1156,6 +1163,10 @@ tickets/{ticketId}
 - requesterId: string
 - requesterName: string
 - requesterEmail: string
+- sessionId: string
+- sessionSupportId: string
+- lastMessageAt: timestamp | null
+- lastMessageBy: "requester" | "support" | null
 - assignedToId: string | null
 - assignedToName: string | null
 - supportResponse: string | null
@@ -1169,27 +1180,75 @@ tickets/{ticketId}
 ### Observações
 
 - `requesterId` permite que cada solicitante consulte apenas seus próprios chamados.
+- `sessionId` registra o código/sessão em que o chamado foi aberto.
+- `sessionSupportId` define qual suporte tem permissão de leitura e atendimento.
+- `lastMessageAt` e `lastMessageBy` alimentam as notificações de novas mensagens.
 - `assignedToId` indica qual usuário de suporte assumiu o chamado.
 - `supportResponse` é a resposta que o solicitante visualiza.
 - `resolution` descreve a solução aplicada.
 
 ---
 
-## 16.3 Subcoleção opcional `ticketHistory`
+## 16.3 Coleção `sessoes`
 
-Para uma versão mais avançada, cada chamado pode ter um histórico de eventos.
+Cada documento representa um código de atendimento criado por um usuário de suporte.
 
 ```txt
-tickets/{ticketId}/history/{historyId}
-- action: string
-- oldStatus: string | null
-- newStatus: string | null
-- userId: string
-- userName: string
-- createdAt: timestamp
+sessoes/{codigo}
+- codigo: string
+- suporteId: string
+- suporteNome: string
+- ativo: boolean
+- criadoEm: timestamp
 ```
 
-Essa estrutura é opcional. Para o projeto acadêmico, não é obrigatória. Ela pode ser citada como melhoria futura.
+Observações:
+
+- O ID do documento é o próprio código digitado pelo solicitante.
+- A sessão ativa define o `sessionSupportId` gravado nos novos chamados.
+- Encerrar uma sessão impede novas entradas com o código, mas não apaga chamados já vinculados.
+
+---
+
+## 16.4 Subcoleção `mensagens`
+
+Cada chamado possui uma conversa em tempo real entre solicitante e suporte.
+
+```txt
+tickets/{ticketId}/mensagens/{mensagemId}
+- autorId: string
+- autorNome: string
+- autorPapel: "requester" | "support"
+- texto: string
+- criadoEm: timestamp
+```
+
+Observações:
+
+- Mensagens são imutáveis: criadas uma vez, sem edição ou exclusão.
+- As regras validam se o autor faz parte do chamado.
+- O documento do chamado é atualizado com `lastMessageAt` e `lastMessageBy` para notificações.
+
+---
+
+## 16.5 Subcoleção `historico`
+
+Cada chamado registra eventos relevantes para auditoria.
+
+```txt
+tickets/{ticketId}/historico/{historicoId}
+- acao: string
+- statusAnterior: string | null
+- statusNovo: string | null
+- autorId: string
+- autorNome: string
+- criadoEm: timestamp
+```
+
+Observações:
+
+- No plano Spark/free, o histórico é gravado pelo cliente.
+- As regras permitem criação pelas partes do chamado e bloqueiam update/delete.
 
 ---
 
@@ -1201,7 +1260,10 @@ Exemplos:
 
 - Criar usuário no cadastro.
 - Criar documento do usuário na coleção `users`.
+- Criar sessão de atendimento na coleção `sessoes`.
 - Criar chamado na coleção `tickets`.
+- Criar mensagem em `tickets/{ticketId}/mensagens`.
+- Criar evento em `tickets/{ticketId}/historico`.
 
 ---
 
@@ -1211,8 +1273,9 @@ Exemplos:
 
 - Buscar dados do usuário logado.
 - Listar chamados do solicitante.
-- Listar todos os chamados para suporte.
+- Listar chamados vinculados às sessões do suporte.
 - Visualizar detalhes de um chamado.
+- Observar mensagens e histórico em tempo real.
 
 ---
 
@@ -1225,6 +1288,8 @@ Exemplos:
 - Registrar técnico responsável.
 - Adicionar resposta do suporte.
 - Registrar solução aplicada.
+- Atualizar marcadores de última mensagem (`lastMessageAt`, `lastMessageBy`).
+- Encerrar/reabrir sessão de atendimento.
 
 ---
 
@@ -1234,6 +1299,7 @@ Exemplos:
 
 - Solicitante exclui chamado aberto.
 - Suporte exclui chamado quando necessário.
+- Usuário autenticado exclui a própria conta pelo fluxo de autoexclusão.
 
 Recomendação: sempre exibir modal de confirmação antes de excluir.
 
@@ -1250,11 +1316,15 @@ A segurança deve ser pensada em dois níveis:
 
 - Apenas usuários autenticados podem acessar dados internos.
 - Cada usuário pode ler seu próprio documento em `users`.
+- Cada usuário pode atualizar nome/departamento do próprio perfil e excluir o próprio perfil no fluxo de autoexclusão.
 - Solicitantes podem criar chamados vinculados ao próprio UID.
 - Solicitantes podem ler apenas seus próprios chamados.
 - Solicitantes podem editar/excluir apenas chamados próprios e abertos.
-- Usuários de suporte podem ler todos os chamados.
+- Usuários de suporte podem ler chamados cujo `sessionSupportId` seja o próprio UID.
 - Usuários de suporte podem atualizar status, resposta, solução e responsável.
+- Apenas as partes de um chamado podem ler/criar mensagens.
+- Apenas as partes de um chamado podem ler/criar eventos de histórico.
+- Sessões de atendimento são criadas pelo suporte e lidas pelo solicitante ao informar o código.
 
 ---
 
@@ -1730,7 +1800,7 @@ Sugestão:
 
 ## 27.5 Etapa 5 — Painel do suporte
 
-- Listar todos os chamados.
+- Listar chamados vinculados às sessões do suporte.
 - Criar filtros.
 - Criar tela de atendimento.
 - Permitir assumir chamado.
@@ -1765,7 +1835,7 @@ Para entregar dentro dos requisitos do professor, o projeto precisa ter pelo men
 - Solicitante lista seus chamados.
 - Solicitante edita chamado aberto.
 - Solicitante exclui chamado aberto.
-- Suporte lista todos os chamados.
+- Suporte lista chamados vinculados às próprias sessões.
 - Suporte atualiza status.
 - Suporte responde chamado.
 - Suporte finaliza chamado.
@@ -1821,7 +1891,7 @@ O projeto pode ser considerado pronto quando:
 - Um solicitante consegue abrir chamado.
 - Um solicitante consegue ver apenas seus próprios chamados.
 - Um solicitante consegue editar e excluir chamados abertos.
-- Um usuário de suporte consegue visualizar todos os chamados.
+- Um usuário de suporte consegue visualizar chamados vinculados às próprias sessões.
 - Um usuário de suporte consegue alterar status.
 - Um usuário de suporte consegue responder e finalizar chamados.
 - Dados persistem corretamente no Firestore.
@@ -1834,7 +1904,7 @@ O projeto pode ser considerado pronto quando:
 
 ## 32. Texto de apresentação do projeto
 
-O **TicketFlow** é uma aplicação web desenvolvida com Vue.js e Firebase para gerenciamento de chamados de suporte. A plataforma permite que usuários autenticados abram solicitações, acompanhem o andamento dos atendimentos e visualizem respostas da equipe responsável. O sistema possui dois perfis de acesso: solicitante e suporte. O solicitante pode criar, consultar, editar e excluir seus próprios chamados, enquanto a equipe de suporte pode visualizar todos os chamados, assumir atendimentos, atualizar status, registrar respostas e finalizar solicitações. Todos os dados são armazenados no Cloud Firestore, e o acesso às páginas internas é protegido por autenticação com e-mail e senha.
+O **TicketFlow** é uma aplicação web desenvolvida com Vue.js e Firebase para gerenciamento de chamados de suporte. A plataforma permite que usuários autenticados abram solicitações, acompanhem o andamento dos atendimentos, conversem em tempo real e visualizem respostas da equipe responsável. O sistema possui dois perfis de acesso: solicitante e suporte. O solicitante pode criar, consultar, editar e excluir seus próprios chamados abertos, enquanto a equipe de suporte visualiza os chamados vinculados às suas sessões de atendimento, assume atendimentos, atualiza status, conversa pelo chat, registra respostas e finaliza solicitações. Todos os dados são armazenados no Cloud Firestore, e o acesso às páginas internas é protegido por autenticação com e-mail e senha.
 
 ---
 
@@ -1842,13 +1912,13 @@ O **TicketFlow** é uma aplicação web desenvolvida com Vue.js e Firebase para 
 
 Este projeto é uma aplicação Vue.js com Firebase chamada **TicketFlow**. Ela deve funcionar como um sistema de chamados com dois perfis: **solicitante** e **suporte**.
 
-O solicitante cria chamados, visualiza apenas os próprios chamados, edita/exclui chamados abertos e acompanha respostas. O suporte visualiza todos os chamados, filtra, assume chamados, altera status, responde, registra solução e finaliza atendimentos.
+O solicitante entra com um código de atendimento, cria chamados, visualiza apenas os próprios chamados, edita/exclui chamados abertos, conversa no chat e acompanha respostas. O suporte gera códigos de atendimento, visualiza os chamados vinculados às próprias sessões, filtra, assume chamados, altera status, conversa, responde, registra solução e finaliza atendimentos.
 
 A aplicação deve usar Firebase Authentication com e-mail e senha. Após o cadastro, um documento do usuário deve ser criado no Firestore com o campo `role`, que define se ele é `requester` ou `support`. As rotas devem ser protegidas por autenticação e por perfil.
 
-Os dados principais ficam nas coleções `users` e `tickets`. A coleção `tickets` deve permitir CRUD completo e conter informações como título, descrição, categoria, prioridade, status, solicitante, responsável, resposta, solução e datas.
+Os dados principais ficam nas coleções `users`, `tickets` e `sessoes`. A coleção `tickets` permite CRUD completo e contém título, descrição, categoria, prioridade, status, solicitante, vínculo de sessão, responsável, resposta, solução, datas e marcadores de última mensagem. Cada chamado também pode ter subcoleções `mensagens` e `historico`.
 
-O projeto deve ser organizado em pastas separadas para `components`, `views`, `services`, `composables`, `router`, `stores`, `constants`, `utils` e `styles`. A lógica de Firebase deve ficar em serviços, e as telas devem usar componentes reutilizáveis.
+O projeto está organizado em pastas equivalentes em português: `componentes`, `paginas`, `servicos`, `composables`, `rotas`, `stores`, `constantes`, `utils` e `estilos`. A lógica de Firebase fica em serviços, e as telas usam componentes reutilizáveis.
 
 O objetivo é entregar uma aplicação profissional, simples de usar, responsiva, bem organizada e alinhada aos requisitos acadêmicos: Vue.js, Firebase Authentication, Cloud Firestore, CRUD completo e controle de acesso.
 
@@ -1858,76 +1928,87 @@ O objetivo é entregar uma aplicação profissional, simples de usar, responsiva
 
 ### Autenticação
 
-- [ ] Cadastro com e-mail e senha
-- [ ] Login com e-mail e senha
-- [ ] Logout
-- [ ] Criação de perfil no Firestore
-- [ ] Redirecionamento por perfil
+- [x] Cadastro com e-mail e senha
+- [x] Login com e-mail e senha
+- [x] Logout
+- [x] Criação de perfil no Firestore
+- [x] Redirecionamento por perfil
+- [x] Autoexclusão com reautenticação
 
 ### Rotas
 
-- [ ] Rotas públicas
-- [ ] Rotas protegidas
-- [ ] Bloqueio para usuário não logado
-- [ ] Bloqueio por perfil
+- [x] Rotas públicas
+- [x] Rotas protegidas
+- [x] Bloqueio para usuário não logado
+- [x] Bloqueio por perfil
+- [x] Bloqueio de solicitante sem sessão ativa
 
 ### Solicitante
 
-- [ ] Dashboard do solicitante
-- [ ] Criar chamado
-- [ ] Listar meus chamados
-- [ ] Ver detalhes
-- [ ] Editar chamado aberto
-- [ ] Excluir chamado aberto
+- [x] Conectar com código de atendimento
+- [x] Dashboard do solicitante
+- [x] Criar chamado
+- [x] Listar meus chamados
+- [x] Ver detalhes
+- [x] Editar chamado aberto
+- [x] Excluir chamado aberto
+- [x] Chat e notificações
 
 ### Suporte
 
-- [ ] Dashboard do suporte
-- [ ] Listar todos os chamados
-- [ ] Filtrar chamados
-- [ ] Assumir chamado
-- [ ] Atualizar status
-- [ ] Responder chamado
-- [ ] Registrar solução
-- [ ] Finalizar chamado
+- [x] Dashboard do suporte
+- [x] Gerar/usar sessão de atendimento
+- [x] Listar chamados vinculados às sessões
+- [x] Filtrar chamados
+- [x] Agrupar meus solicitantes
+- [x] Assumir chamado
+- [x] Atualizar status
+- [x] Responder chamado
+- [x] Registrar solução
+- [x] Finalizar chamado
+- [x] Chat e notificações
 
 ### Firestore
 
-- [ ] Coleção `users`
-- [ ] Coleção `tickets`
-- [ ] Inserção de dados
-- [ ] Consulta de dados
-- [ ] Atualização de dados
-- [ ] Exclusão de dados
+- [x] Coleção `users`
+- [x] Coleção `tickets`
+- [x] Coleção `sessoes`
+- [x] Subcoleção `mensagens`
+- [x] Subcoleção `historico`
+- [x] Inserção de dados
+- [x] Consulta de dados
+- [x] Atualização de dados
+- [x] Exclusão de dados
+- [ ] Deploy de regras/índices em produção
 
 ### Interface
 
-- [ ] Layout público
-- [ ] Layout interno
-- [ ] Componentes reutilizáveis
-- [ ] Cards de resumo
-- [ ] Badges de status
-- [ ] Badges de prioridade
-- [ ] Estados de loading
-- [ ] Estados vazios
-- [ ] Responsividade
+- [x] Layout público
+- [x] Layout interno
+- [x] Componentes reutilizáveis
+- [x] Cards de resumo
+- [x] Badges de status
+- [x] Badges de prioridade
+- [x] Estados de loading
+- [x] Estados vazios
+- [~] Responsividade implementada; pendente revisão final em dispositivos reais
 
 ### Qualidade
 
-- [ ] Código organizado
-- [ ] Serviços separados
-- [ ] Constantes padronizadas
-- [ ] Tratamento de erros
-- [ ] Validações de formulário
-- [ ] Confirmação antes de excluir
-- [ ] Nomes claros de arquivos e componentes
+- [x] Código organizado
+- [x] Serviços separados
+- [x] Constantes padronizadas
+- [x] Tratamento de erros
+- [x] Validações de formulário
+- [x] Confirmação antes de excluir
+- [x] Nomes claros de arquivos e componentes
 
 ---
 
 ## 35. Conclusão
 
-O TicketFlow é uma proposta forte para o projeto final porque não se limita a um CRUD genérico. Ele apresenta um cenário real de uso, com dois perfis de acesso, regras de negócio claras, controle de permissões, fluxo de atendimento e dados persistidos no Firestore.
+O TicketFlow é uma aplicação forte para o projeto final porque não se limita a um CRUD genérico. Ele apresenta um cenário real de uso, com dois perfis de acesso, sessões de atendimento por código, regras de negócio claras, controle de permissões, chat, notificações, fluxo de atendimento e dados persistidos no Firestore.
 
 A aplicação demonstra domínio dos principais pontos exigidos pelo professor: Vue.js, organização por componentes, autenticação, controle de acesso, Cloud Firestore e operações de criar, consultar, atualizar e excluir dados.
 
-Além disso, a proposta permite uma implementação simples o suficiente para ser viável, mas profissional o bastante para se destacar como projeto final.
+O estado atual é de implementação funcional. As pendências principais são validar tudo em Firebase real, fazer deploy das regras/índices, revisar responsividade final, gerar build e publicar o hosting.

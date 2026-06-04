@@ -24,6 +24,13 @@ const notificacao = useNotificacao();
 // Chamados abertos sem responsavel, do mais recente para o mais antigo.
 const pendentes = ref([]);
 
+// Lista COMPLETA dos chamados do suporte (qualquer status), crua (sem ordenar).
+// Exposta para a store espelhar e evitar abrir um 2o onSnapshot na mesma query
+// (mesma fonte alimenta o sino e os paineis de suporte). `carregado` indica que
+// a 1a leitura ja chegou (usado para o estado de carregamento dos paineis).
+const todos = ref([]);
+const carregado = ref(false);
+
 // Referencia para cancelar a escuta em tempo real.
 let cancelar = null;
 // Set com os IDs ja conhecidos. `null` enquanto a 1a carga nao chegou: nessa
@@ -72,6 +79,10 @@ function detectarMensagens(lista) {
  * @param {object[]} lista - Chamados das sessoes do suporte (qualquer status).
  */
 function aoAtualizar(lista) {
+  // Espelha a lista completa (fonte unica para a store dos paineis de suporte).
+  todos.value = lista;
+  carregado.value = true;
+
   // Avisa de mensagens novas do solicitante (independe do status do chamado).
   detectarMensagens(lista);
 
@@ -149,6 +160,8 @@ function parar() {
   ultimasMensagens = new Map();
   mensagensSemeadas = false;
   pendentes.value = [];
+  todos.value = [];
+  carregado.value = false;
 }
 
 /**
@@ -159,6 +172,8 @@ export function useNotificacaoSuporte() {
   return {
     pendentes: readonly(pendentes),
     quantidade: computed(() => pendentes.value.length),
+    todos: readonly(todos),
+    carregado: readonly(carregado),
     iniciar,
     parar,
     marcarLido,
