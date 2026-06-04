@@ -59,6 +59,19 @@
     <!-- Indicadores -->
     <ResumoPainel :cards="indicadores" />
 
+    <!-- Faixa de resumo analitico (link para a aba Relatorios) -->
+    <RouterLink v-if="temResumo" to="/suporte/relatorios" class="painel resumo-rel elevavel">
+      <div class="resumo-kpi">
+        <span class="rotulo-pequeno">Tempo medio de resolucao</span>
+        <strong class="numero-indicador">{{ tempoMedioTexto }}</strong>
+        <span class="texto-secundario">ultimo trimestre</span>
+      </div>
+      <div class="resumo-spark">
+        <GraficoLinha :labels="volumeResumo.labels" :valores="volumeResumo.data" mini />
+      </div>
+      <span class="resumo-cta">Ver relatorios <ArrowRight :size="16" /></span>
+    </RouterLink>
+
     <!-- Destaque: urgentes em aberto (so aparece quando ha algum) -->
     <section v-if="listaUrgentes.length" class="cartao-destaque destaque-urgentes">
       <header class="bloco-cabecalho">
@@ -110,7 +123,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import { ListChecks, KeyRound, Copy, RefreshCw, Check } from "@lucide/vue";
+import { ListChecks, KeyRound, Copy, RefreshCw, Check, ArrowRight } from "@lucide/vue";
 import LayoutApp from "../../componentes/layout/LayoutApp.vue";
 import ResumoPainel from "../../componentes/painel/ResumoPainel.vue";
 import TabelaChamados from "../../componentes/chamados/TabelaChamados.vue";
@@ -118,10 +131,13 @@ import SeloStatusChamado from "../../componentes/chamados/SeloStatusChamado.vue"
 import EstadoCarregamento from "../../componentes/comuns/EstadoCarregamento.vue";
 import EstadoVazio from "../../componentes/comuns/EstadoVazio.vue";
 import BotaoBase from "../../componentes/comuns/BotaoBase.vue";
+import GraficoLinha from "../../componentes/relatorios/GraficoLinha.vue";
 import { useAutenticacao } from "../../composables/useAutenticacao.js";
 import { useChamados } from "../../composables/useChamados.js";
 import { useSessao } from "../../composables/useSessao.js";
 import { useNotificacao } from "../../composables/useNotificacao.js";
+import { useRelatorios } from "../../composables/useRelatorios.js";
+import { formatarDuracao } from "../../utils/relatorios.js";
 import { STATUS } from "../../constantes/statusChamado.js";
 import { PRIORIDADE } from "../../constantes/prioridadesChamado.js";
 
@@ -170,6 +186,14 @@ const indicadores = computed(() => [
   { rotulo: "Em andamento", numero: emAndamento.value, sub: "sendo atendidos" },
   { rotulo: "Urgentes", numero: urgentes.value, sub: "exigem prioridade" },
 ]);
+
+// Faixa de resumo analitico (trimestre) que linka para a aba Relatorios.
+const {
+  temDados: temResumo,
+  volume: volumeResumo,
+  tempoMedio: tempoMedioResumo,
+} = useRelatorios("trimestre");
+const tempoMedioTexto = computed(() => formatarDuracao(tempoMedioResumo.value.ms));
 
 // Mostra apenas os 5 mais recentes no painel.
 const recentes = computed(() => chamados.value.slice(0, 5));
@@ -261,6 +285,47 @@ onUnmounted(() => {
   border-radius: var(--raio-input);
   background: var(--vidro-fundo-forte, var(--vidro-fundo));
   border: 1px solid color-mix(in srgb, var(--cor-acento) 28%, transparent);
+}
+
+/* ----- Faixa de resumo analitico (link para Relatorios) ------------------- */
+.resumo-rel {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-lg);
+  text-decoration: none;
+  color: inherit;
+}
+
+.resumo-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.resumo-spark {
+  flex: 1;
+  min-width: 0;
+}
+
+.resumo-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  font-weight: var(--peso-semibold);
+  color: var(--cor-acento);
+}
+
+@media (max-width: 760px) {
+  .resumo-rel {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--espaco-md);
+  }
+  .resumo-cta {
+    justify-content: flex-end;
+  }
 }
 
 .bloco-cabecalho {

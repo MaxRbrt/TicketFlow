@@ -62,6 +62,7 @@ import {
   Zap,
   Users,
   UserRound,
+  BarChart3,
   LogOut,
 } from "@lucide/vue";
 import { useAutenticacao } from "../../composables/useAutenticacao.js";
@@ -86,6 +87,7 @@ const MENU_SUPORTE = [
   { rota: "/suporte/chamados", rotulo: "Todos os Chamados", icone: Ticket },
   { rota: "/suporte/chamados/urgentes", rotulo: "Urgentes", icone: Zap },
   { rota: "/suporte/solicitantes", rotulo: "Solicitantes", icone: Users },
+  { rota: "/suporte/relatorios", rotulo: "Relatorios", icone: BarChart3 },
   { rota: "/perfil", rotulo: "Perfil", icone: UserRound },
 ];
 

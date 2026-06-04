@@ -33,6 +33,7 @@ import PainelSuporte from "../paginas/suporte/PainelSuporte.vue";
 import TodosChamados from "../paginas/suporte/TodosChamados.vue";
 import ChamadosUrgentes from "../paginas/suporte/ChamadosUrgentes.vue";
 import MeusSolicitantes from "../paginas/suporte/MeusSolicitantes.vue";
+import Relatorios from "../paginas/suporte/Relatorios.vue";
 import DetalhesChamadoSuporte from "../paginas/suporte/DetalhesChamadoSuporte.vue";
 
 // Paginas compartilhadas (Etapa 11).
@@ -129,6 +130,12 @@ const routes = [
     name: "suporte-solicitantes",
     component: MeusSolicitantes,
     meta: { requiresAuth: true, perfil: PERFIL.SUPORTE, titulo: "Meus Solicitantes" },
+  },
+  {
+    path: "/suporte/relatorios",
+    name: "suporte-relatorios",
+    component: Relatorios,
+    meta: { requiresAuth: true, perfil: PERFIL.SUPORTE, titulo: "Relatorios" },
   },
   {
     path: "/suporte/chamados/:id",
