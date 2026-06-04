@@ -10,7 +10,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import {
   observarChamadosDoSolicitante,
-  observarTodosChamados,
+  observarChamadosDoSuporte,
   observarChamado,
   criarChamado,
   atualizarChamado,
@@ -99,12 +99,16 @@ export const useStoreChamado = defineStore("chamado", () => {
     );
   }
 
-  /** Escuta em tempo real todos os chamados (painel de suporte). */
-  function escutarTodos() {
+  /**
+   * Escuta em tempo real os chamados das sessoes do suporte (painel de suporte).
+   * @param {string} suporteId - UID do suporte logado.
+   */
+  function escutarTodos(suporteId) {
     pararEscutaLista();
     carregando.value = true;
     erro.value = null;
-    cancelarLista = observarTodosChamados(
+    cancelarLista = observarChamadosDoSuporte(
+      suporteId,
       (lista) => {
         chamados.value = lista;
         carregando.value = false;

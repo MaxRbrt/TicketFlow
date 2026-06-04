@@ -83,6 +83,10 @@ service cloud.firestore {
         'requesterId',
         'requesterName',
         'requesterEmail',
+        'sessionId',
+        'sessionSupportId',
+        'lastMessageAt',
+        'lastMessageBy',
         'assignedToId',
         'assignedToName',
         'supportResponse',
@@ -106,6 +110,10 @@ service cloud.firestore {
         'requesterId',
         'requesterName',
         'requesterEmail',
+        'sessionId',
+        'sessionSupportId',
+        'lastMessageAt',
+        'lastMessageBy',
         'assignedToId',
         'assignedToName',
         'supportResponse',
@@ -115,6 +123,24 @@ service cloud.firestore {
         'resolvedAt',
         'cancelledAt'
       ]);
+    }
+
+    function camposSessaoPermitidos() {
+      return request.resource.data.keys().hasOnly([
+        'codigo',
+        'suporteId',
+        'suporteNome',
+        'ativo',
+        'criadoEm'
+      ]);
+    }
+
+    // Confere que a sessao informada no ticket existe, esta ativa e pertence ao
+    // suporte declarado em `sessionSupportId` (impede forjar o vinculo).
+    function sessaoDoTicketValida() {
+      return exists(/databases/$(database)/documents/sessoes/$(request.resource.data.sessionId))
+        && get(/databases/$(database)/documents/sessoes/$(request.resource.data.sessionId)).data.suporteId == request.resource.data.sessionSupportId
+        && get(/databases/$(database)/documents/sessoes/$(request.resource.data.sessionId)).data.ativo == true;
     }
 
     function ticketBaseValido(ticketId) {
@@ -130,6 +156,8 @@ service cloud.firestore {
         && request.resource.data.requesterId is string
         && request.resource.data.requesterName is string
         && request.resource.data.requesterEmail is string
+        && request.resource.data.sessionId is string
+        && request.resource.data.sessionSupportId is string
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp
         && prioridadeValida(request.resource.data.priority)
@@ -190,18 +218,23 @@ service cloud.firestore {
     }
 
     match /tickets/{ticketId} {
-      allow read: if eSuporte()
+      // Suporte le apenas os chamados das proprias sessoes (escopo por
+      // `sessionSupportId`); o solicitante le os proprios.
+      allow read: if (eSuporte() && resource.data.sessionSupportId == request.auth.uid)
         || (estaLogado() && resource.data.requesterId == request.auth.uid);
 
       allow create: if estaLogado()
         && ticketBaseValido(ticketId)
         && request.resource.data.requesterId == request.auth.uid
         && request.resource.data.requesterEmail == request.auth.token.email
+        && sessaoDoTicketValida()
         && request.resource.data.status == 'open'
         && request.resource.data.assignedToId == null
         && request.resource.data.assignedToName == null
         && request.resource.data.supportResponse == null
         && request.resource.data.resolution == null
+        && request.resource.data.lastMessageAt == null
+        && request.resource.data.lastMessageBy == null
         && request.resource.data.resolvedAt == null
         && request.resource.data.cancelledAt == null;
 
@@ -233,17 +266,108 @@ service cloud.firestore {
         && request.resource.data.createdAt == resource.data.createdAt
         && camposEditaveisPeloSuporte();
 
+      // Marcadores de ultima mensagem do chat: qualquer parte do chamado pode
+      // atualizar SO esses dois campos (independe do status). O `lastMessageBy`
+      // tem de bater com o lado de quem escreve (evita forjar a origem).
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessageAt', 'lastMessageBy'])
+        && request.resource.data.lastMessageAt is timestamp
+        && (
+          (estaLogado()
+            && resource.data.requesterId == request.auth.uid
+            && request.resource.data.lastMessageBy == 'requester')
+          || (eSuporte()
+            && resource.data.sessionSupportId == request.auth.uid
+            && request.resource.data.lastMessageBy == 'support')
+        );
+
       allow delete: if eSuporte()
         || (estaLogado()
           && resource.data.requesterId == request.auth.uid
           && resource.data.status == 'open');
 
       match /historico/{historicoId} {
-        allow read: if eSuporte()
-          || (estaLogado()
-            && get(/databases/$(database)/documents/tickets/$(ticketId)).data.requesterId == request.auth.uid);
-        allow write: if false;
+        function ticketPaiHist() {
+          return get(/databases/$(database)/documents/tickets/$(ticketId)).data;
+        }
+        function eSolicitanteHist() {
+          return estaLogado() && ticketPaiHist().requesterId == request.auth.uid;
+        }
+        function eSuporteHist() {
+          return eSuporte() && ticketPaiHist().sessionSupportId == request.auth.uid;
+        }
+
+        allow read: if eSolicitanteHist() || eSuporteHist();
+
+        // Trilha de auditoria gravada pelo cliente (plano Spark, sem Functions).
+        // So as partes do chamado criam; eventos sao imutaveis. O autor tem de
+        // ser o proprio usuario.
+        allow create: if (eSolicitanteHist() || eSuporteHist())
+          && request.resource.data.keys().hasOnly([
+            'acao', 'statusAnterior', 'statusNovo', 'autorId', 'autorNome', 'criadoEm'
+          ])
+          && request.resource.data.acao is string
+          && request.resource.data.autorId == request.auth.uid
+          && request.resource.data.criadoEm is timestamp;
+
+        allow update, delete: if false;
       }
+
+      // Chat do chamado: conversa entre o solicitante dono e o suporte da sessao.
+      match /mensagens/{mensagemId} {
+        function ticketPai() {
+          return get(/databases/$(database)/documents/tickets/$(ticketId)).data;
+        }
+        function eSolicitanteDoTicket() {
+          return estaLogado() && ticketPai().requesterId == request.auth.uid;
+        }
+        function eSuporteDoTicket() {
+          return eSuporte() && ticketPai().sessionSupportId == request.auth.uid;
+        }
+
+        allow read: if eSolicitanteDoTicket() || eSuporteDoTicket();
+
+        // Mensagens sao imutaveis: apenas create, sem update/delete. O autor tem
+        // de ser o proprio usuario e o papel coerente com o lado do chamado.
+        allow create: if (eSolicitanteDoTicket() || eSuporteDoTicket())
+          && request.resource.data.keys().hasOnly([
+            'autorId', 'autorNome', 'autorPapel', 'texto', 'criadoEm'
+          ])
+          && request.resource.data.autorId == request.auth.uid
+          && request.resource.data.autorNome is string
+          && request.resource.data.texto is string
+          && request.resource.data.texto.size() > 0
+          && request.resource.data.texto.size() <= 2000
+          && request.resource.data.criadoEm is timestamp
+          && (
+            (eSolicitanteDoTicket() && request.resource.data.autorPapel == 'requester')
+            || (eSuporteDoTicket() && request.resource.data.autorPapel == 'support')
+          );
+
+        allow update, delete: if false;
+      }
+    }
+
+    match /sessoes/{codigo} {
+      // Qualquer usuario logado pode LER uma sessao pelo codigo (necessario para
+      // o solicitante validar o codigo ao entrar). O codigo e um identificador
+      // de pareamento, nao um segredo; o escopo real dos dados fica nos tickets.
+      allow read: if estaLogado();
+
+      // Apenas o suporte cria a propria sessao (suporteId = ele mesmo, ativa).
+      allow create: if eSuporte()
+        && camposSessaoPermitidos()
+        && request.resource.data.codigo == codigo
+        && request.resource.data.suporteId == request.auth.uid
+        && request.resource.data.suporteNome is string
+        && request.resource.data.ativo == true
+        && request.resource.data.criadoEm is timestamp;
+
+      // O dono pode apenas alternar `ativo` (encerrar/reabrir a sessao).
+      allow update: if eSuporte()
+        && resource.data.suporteId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ativo']);
+
+      allow delete: if false;
     }
 
     match /{document=**} {

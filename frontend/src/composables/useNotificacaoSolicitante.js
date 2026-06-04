@@ -41,11 +41,18 @@ let inicializado = false;
  * @param {object} c - Chamado.
  */
 function assinatura(c) {
+  // Mensagem de chat so conta quando veio do SUPORTE (msg do proprio
+  // solicitante nao deve gerar autoaviso).
+  const msgSuporte =
+    c.lastMessageBy === "support"
+      ? c.lastMessageAt?.toMillis?.() || c.lastMessageAt || ""
+      : "";
   return [
     c.status || "",
     c.supportResponse || "",
     c.resolution || "",
     c.assignedToName || "",
+    msgSuporte,
   ].join("|");
 }
 

@@ -88,8 +88,8 @@ const { ehSuporte, ehSolicitante, usuario } = useAutenticacao();
 
 const notifSuporte = useNotificacaoSuporte();
 watch(
-  ehSuporte,
-  (sup) => (sup ? notifSuporte.iniciar() : notifSuporte.parar()),
+  [ehSuporte, usuario],
+  ([sup, u]) => (sup && u?.uid ? notifSuporte.iniciar(u.uid) : notifSuporte.parar()),
   { immediate: true }
 );
 

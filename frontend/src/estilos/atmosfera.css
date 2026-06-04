@@ -4,8 +4,8 @@
    Da profundidade ao fundo para o glassmorphism funcionar: o blur do vidro so
    "aparece" quando ha formas coloridas borradas atras dele.
 
-   Camadas (todas CSS puro, sem markup extra):
-     1. body            -> gradiente base + manchas de cor suaves (estaticas)
+   Camadas (sem markup extra):
+     1. body            -> montanhas + gradiente base + manchas de cor suaves
      2. body::before    -> blob grande borrado que flutua lentamente (animado)
      3. body::after     -> textura de grao sutil por cima de tudo
    ========================================================================== */
@@ -14,12 +14,33 @@ body {
   position: relative;
   background-color: var(--cor-fundo-2);
   background-image:
+    linear-gradient(
+      180deg,
+      rgba(8, 22, 27, 0.2) 0%,
+      rgba(8, 22, 27, 0.42) 48%,
+      rgba(8, 22, 27, 0.78) 100%
+    ),
     radial-gradient(60% 50% at 18% 18%, var(--blob-azul) 0%, transparent 60%),
     radial-gradient(55% 45% at 85% 22%, var(--blob-verde) 0%, transparent 60%),
     radial-gradient(50% 50% at 75% 88%, var(--blob-roxo) 0%, transparent 62%),
+    url("/backgrounds/montanhas-ticketflow.png"),
     var(--gradiente-fundo);
   background-attachment: fixed;
+  background-position:
+    center,
+    center,
+    center,
+    center,
+    center bottom,
+    center;
   background-repeat: no-repeat;
+  background-size:
+    cover,
+    auto,
+    auto,
+    auto,
+    cover,
+    auto;
 }
 
 /* ----- Blob animado: mancha grande e borrada que flutua devagar ----------- */

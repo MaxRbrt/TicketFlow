@@ -20,6 +20,9 @@
       <template v-else>
         <PainelDetalhesChamado :chamado="chamadoAtual" />
 
+        <!-- Conversa com o suporte -->
+        <ChatChamado :chamado-id="route.params.id" />
+
         <!-- Acoes (apenas enquanto aberto) -->
         <div v-if="estaAberto" class="acoes">
           <BotaoBase variante="secundario" @click="editar">
@@ -38,6 +41,9 @@
         <p v-else class="texto-secundario aviso">
           Este chamado nao esta mais aberto e nao pode ser editado.
         </p>
+
+        <!-- Linha do tempo do chamado -->
+        <HistoricoChamado :chamado-id="route.params.id" />
       </template>
     </div>
 
@@ -71,6 +77,8 @@ import { useRouter, useRoute } from "vue-router";
 import { ArrowLeft, Pencil, Ban, Trash2 } from "@lucide/vue";
 import LayoutApp from "../../componentes/layout/LayoutApp.vue";
 import PainelDetalhesChamado from "../../componentes/chamados/PainelDetalhesChamado.vue";
+import ChatChamado from "../../componentes/chamados/ChatChamado.vue";
+import HistoricoChamado from "../../componentes/chamados/HistoricoChamado.vue";
 import BotaoBase from "../../componentes/comuns/BotaoBase.vue";
 import EstadoCarregamento from "../../componentes/comuns/EstadoCarregamento.vue";
 import ModalBase from "../../componentes/comuns/ModalBase.vue";

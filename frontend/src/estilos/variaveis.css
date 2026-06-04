@@ -24,7 +24,7 @@
 
   /* ----- Texto ----------------------------------------------------------- */
   --cor-texto-principal: #eef7f8;     /* quase branco, levemente frio       */
-  --cor-texto-secundario: #9fbfc4;    /* cinza azulado claro                */
+  --cor-texto-secundario: #b8d2d6;    /* cinza azulado claro                */
   --cor-texto-sobre-escuro: #eef7f8;  /* texto sobre paineis escuros        */
   --cor-texto-sobre-acento: #0c2025;  /* texto escuro sobre botao ciano     */
 
@@ -35,9 +35,9 @@
   --gradiente-fundo: linear-gradient(135deg, var(--cor-fundo-1) 0%, var(--cor-fundo-2) 50%, var(--cor-fundo-3) 100%);
 
   /* ----- Vidro (glassmorphism escuro) ------------------------------------ */
-  --vidro-fundo: rgba(255, 255, 255, 0.06);
-  --vidro-fundo-forte: rgba(255, 255, 255, 0.09);
-  --vidro-borda: rgba(150, 230, 235, 0.18);
+  --vidro-fundo: rgba(13, 34, 40, 0.56);
+  --vidro-fundo-forte: rgba(16, 42, 49, 0.74);
+  --vidro-borda: rgba(165, 236, 241, 0.24);
   --vidro-blur: 18px;
 
   /* ----- Cores semanticas (brilhantes para ler bem no escuro) ------------ */

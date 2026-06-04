@@ -50,6 +50,7 @@ import BotaoBase from "../../componentes/comuns/BotaoBase.vue";
 import EstadoCarregamento from "../../componentes/comuns/EstadoCarregamento.vue";
 import { useAutenticacao } from "../../composables/useAutenticacao.js";
 import { useChamados } from "../../composables/useChamados.js";
+import { useSessao } from "../../composables/useSessao.js";
 import { useNotificacao } from "../../composables/useNotificacao.js";
 import { buscarChamado } from "../../servicos/servicoChamado.js";
 import { STATUS } from "../../constantes/statusChamado.js";
@@ -58,6 +59,7 @@ const router = useRouter();
 const route = useRoute();
 const { usuario, nome } = useAutenticacao();
 const { criar, atualizar } = useChamados();
+const { ativa: sessaoAtiva, codigo: sessaoCodigo, suporteId: sessaoSuporteId } = useSessao();
 const notificacao = useNotificacao();
 
 // Modo edicao quando a rota traz um id.
@@ -98,11 +100,20 @@ async function salvar(dados) {
   if (modoEdicao.value) {
     resultado = await atualizar(idChamado.value, dados);
   } else {
+    // Exige vinculo de sessao ativo: sem isso o chamado nao tem suporte destino.
+    if (!sessaoAtiva.value) {
+      enviando.value = false;
+      notificacao.erro("Conecte-se a um suporte antes de abrir um chamado.");
+      router.push("/solicitante/sessao");
+      return;
+    }
     resultado = await criar({
       ...dados,
       requesterId: usuario.value.uid,
       requesterName: nome.value,
       requesterEmail: usuario.value.email,
+      sessionId: sessaoCodigo.value,
+      sessionSupportId: sessaoSuporteId.value,
     });
   }
 

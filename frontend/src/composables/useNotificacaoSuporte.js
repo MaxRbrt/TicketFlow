@@ -17,6 +17,7 @@ import { ref, computed, readonly } from "vue";
 import { observarChamadosAbertos } from "../servicos/servicoChamado.js";
 import { ordenarPorMaisRecente } from "../utils/ordenarChamados.js";
 import { useNotificacao } from "./useNotificacao.js";
+import { STATUS } from "../constantes/statusChamado.js";
 
 const notificacao = useNotificacao();
 
@@ -34,17 +35,52 @@ let lidos = new Set();
 // IDs que ja geraram toast nesta sessao do navegador. Segura duplicatas quando
 // o Firestore reenvia snapshots ou a escuta e reiniciada rapidamente.
 const idsNotificados = new Set();
+// Mapa { idChamado: marca da ultima mensagem }. Detecta mensagens novas do
+// solicitante para avisar o suporte. Semeado na 1a carga (sem avisar).
+let ultimasMensagens = new Map();
+let mensagensSemeadas = false;
 // Evita iniciar a escuta mais de uma vez.
 let ativo = false;
 
 /**
+ * Detecta mensagens novas vindas do SOLICITANTE e dispara um toast. Mensagens
+ * do proprio suporte nao avisam. Na 1a carga apenas semeia (sem avisar) para
+ * nao notificar conversas que ja existiam.
+ * @param {object[]} lista - Chamados do suporte (qualquer status).
+ */
+function detectarMensagens(lista) {
+  for (const c of lista) {
+    const marca = c.lastMessageAt?.toMillis?.() || 0;
+    if (!marca) continue;
+
+    const anterior = ultimasMensagens.get(c.id);
+    ultimasMensagens.set(c.id, marca);
+
+    if (!mensagensSemeadas) continue; // 1a carga: so semeia
+    if (c.lastMessageBy !== "requester") continue; // so msg do solicitante avisa
+    if (anterior === undefined || marca > anterior) {
+      const autor = c.requesterName ? ` de ${c.requesterName}` : "";
+      notificacao.info(`Nova mensagem${autor}: ${c.title}`);
+    }
+  }
+  mensagensSemeadas = true;
+}
+
+/**
  * Trata cada atualizacao do Firestore: filtra abertos sem responsavel, ordena,
  * dispara toast para os que sao realmente novos e atualiza a lista.
- * @param {object[]} lista - Chamados com status `open`.
+ * @param {object[]} lista - Chamados das sessoes do suporte (qualquer status).
  */
 function aoAtualizar(lista) {
-  const semResponsavel = lista.filter((c) => !c.assignedToId);
-  const ordenada = ordenarPorMaisRecente(semResponsavel);
+  // Avisa de mensagens novas do solicitante (independe do status do chamado).
+  detectarMensagens(lista);
+
+  // A escuta traz todos os chamados do suporte; aqui filtramos os que ainda
+  // aguardam atendimento (abertos e sem responsavel).
+  const aguardando = lista.filter(
+    (c) => c.status === STATUS.ABERTO && !c.assignedToId
+  );
+  const ordenada = ordenarPorMaisRecente(aguardando);
 
   // Limpa de "lidos" os IDs que nao estao mais abertos/sem-dono (foram
   // assumidos, resolvidos ou excluidos): evita o Set crescer sem limite.
@@ -83,13 +119,18 @@ function marcarLido(id) {
   pendentes.value = pendentes.value.filter((c) => c.id !== id);
 }
 
-/** Liga a escuta em tempo real (idempotente). Use quando o suporte loga. */
-function iniciar() {
+/**
+ * Liga a escuta em tempo real (idempotente). Use quando o suporte loga.
+ * @param {string} suporteId - UID do suporte (escopo das sessoes).
+ */
+function iniciar(suporteId) {
   if (ativo) return;
   ativo = true;
   idsConhecidos = null;
-  cancelar = observarChamadosAbertos(aoAtualizar, (e) =>
-    console.error("Falha ao observar chamados abertos:", e)
+  ultimasMensagens = new Map();
+  mensagensSemeadas = false;
+  cancelar = observarChamadosAbertos(suporteId, aoAtualizar, (e) =>
+    console.error("Falha ao observar chamados do suporte:", e)
   );
 }
 
@@ -105,6 +146,8 @@ function parar() {
   ativo = false;
   idsConhecidos = null;
   lidos = new Set();
+  ultimasMensagens = new Map();
+  mensagensSemeadas = false;
   pendentes.value = [];
 }
 

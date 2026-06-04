@@ -55,7 +55,8 @@ function paraChamado(snap) {
  *
  * @param {object} dados - Dados do chamado:
  *   { title, description, category, priority, location,
- *     requesterId, requesterName, requesterEmail }.
+ *     requesterId, requesterName, requesterEmail,
+ *     sessionId, sessionSupportId }.
  * @returns {Promise<string>} ID do chamado criado.
  */
 export async function criarChamado(dados) {
@@ -73,6 +74,14 @@ export async function criarChamado(dados) {
     requesterId: dados.requesterId,
     requesterName: dados.requesterName,
     requesterEmail: dados.requesterEmail,
+    // Vinculo de sessao: amarra o chamado ao suporte da sessao em que o
+    // solicitante entrou. `sessionSupportId` e a chave de escopo do suporte.
+    sessionId: dados.sessionId,
+    sessionSupportId: dados.sessionSupportId,
+    // Marcadores da ultima mensagem do chat (usados pelas notificacoes para
+    // avisar o outro lado). Comecam nulos (nenhuma mensagem ainda).
+    lastMessageAt: null,
+    lastMessageBy: null,
     assignedToId: null,
     assignedToName: null,
     supportResponse: null,
@@ -84,6 +93,22 @@ export async function criarChamado(dados) {
   };
 
   await setDoc(referencia, chamado);
+
+  // Registra o evento de abertura no historico (trilha de auditoria). Como o
+  // projeto roda no plano Spark (sem Cloud Functions), o historico e gravado
+  // pelo cliente. Best-effort: falha aqui nao impede a criacao do chamado.
+  try {
+    await registrarEvento(referencia.id, {
+      acao: "criado",
+      statusAnterior: null,
+      statusNovo: STATUS.ABERTO,
+      autorId: dados.requesterId,
+      autorNome: dados.requesterName,
+    });
+  } catch (erro) {
+    console.error("Falha ao registrar abertura no historico:", erro?.code || erro);
+  }
+
   return referencia.id;
 }
 
@@ -118,11 +143,17 @@ export async function listarChamadosDoSolicitante(requesterId) {
 }
 
 /**
- * Lista todos os chamados (uso do suporte), do mais recente para o mais antigo.
+ * Lista os chamados das sessoes de um suporte (escopo por `sessionSupportId`),
+ * do mais recente para o mais antigo.
+ * @param {string} suporteId - UID do suporte.
  * @returns {Promise<object[]>} Lista de chamados.
  */
-export async function listarTodosChamados() {
-  const consulta = query(colecaoChamados, orderBy("createdAt", "desc"));
+export async function listarChamadosDoSuporte(suporteId) {
+  const consulta = query(
+    colecaoChamados,
+    where("sessionSupportId", "==", suporteId),
+    orderBy("createdAt", "desc")
+  );
   const snap = await getDocs(consulta);
   return snap.docs.map(paraChamado);
 }
@@ -152,13 +183,20 @@ export function observarChamadosDoSolicitante(requesterId, aoAtualizar, aoErro) 
 }
 
 /**
- * Observa em tempo real todos os chamados (painel de suporte).
+ * Observa em tempo real os chamados das sessoes de um suporte (painel de
+ * suporte). Escopo por `sessionSupportId`: o suporte so ve os chamados dos
+ * solicitantes que entraram com um dos seus codigos de sessao.
+ * @param {string} suporteId - UID do suporte.
  * @param {(chamados: object[]) => void} aoAtualizar - Recebe a lista atualizada.
  * @param {(erro: Error) => void} [aoErro] - Callback de erro opcional.
  * @returns {import("firebase/firestore").Unsubscribe} Cancela a escuta.
  */
-export function observarTodosChamados(aoAtualizar, aoErro) {
-  const consulta = query(colecaoChamados, orderBy("createdAt", "desc"));
+export function observarChamadosDoSuporte(suporteId, aoAtualizar, aoErro) {
+  const consulta = query(
+    colecaoChamados,
+    where("sessionSupportId", "==", suporteId),
+    orderBy("createdAt", "desc")
+  );
   return onSnapshot(
     consulta,
     (snap) => aoAtualizar(snap.docs.map(paraChamado)),
@@ -167,16 +205,21 @@ export function observarTodosChamados(aoAtualizar, aoErro) {
 }
 
 /**
- * Observa em tempo real os chamados ABERTOS (status `open`). Usado pela central
- * de notificacoes do suporte para avisar de chamados novos que ainda esperam
- * atendimento. Consulta apenas por igualdade (sem orderBy), logo nao exige
- * indice composto; a ordenacao/filtragem por responsavel fica no front-end.
+ * Observa em tempo real os chamados de um suporte para a central de
+ * notificacoes (avisa de chamados novos aguardando atendimento). Consulta
+ * apenas por `sessionSupportId` (uma igualdade, sem orderBy), logo nao exige
+ * indice composto; a filtragem por status `open`/sem responsavel e a ordenacao
+ * ficam no front-end.
+ * @param {string} suporteId - UID do suporte.
  * @param {(chamados: object[]) => void} aoAtualizar - Recebe a lista atualizada.
  * @param {(erro: Error) => void} [aoErro] - Callback de erro opcional.
  * @returns {import("firebase/firestore").Unsubscribe} Cancela a escuta.
  */
-export function observarChamadosAbertos(aoAtualizar, aoErro) {
-  const consulta = query(colecaoChamados, where("status", "==", STATUS.ABERTO));
+export function observarChamadosAbertos(suporteId, aoAtualizar, aoErro) {
+  const consulta = query(
+    colecaoChamados,
+    where("sessionSupportId", "==", suporteId)
+  );
   return onSnapshot(
     consulta,
     (snap) => aoAtualizar(snap.docs.map(paraChamado)),
@@ -274,6 +317,108 @@ export async function registrarSolucao(id, solucao) {
     resolution: solucao,
     updatedAt: serverTimestamp(),
   });
+}
+
+// ----------------------------------------------------------------------------
+// MENSAGENS (chat entre solicitante e suporte)
+// ----------------------------------------------------------------------------
+// Conversa do chamado, guardada na subcolecao `tickets/{id}/mensagens`. Espelha
+// o padrao da subcolecao `historico`: mensagens sao imutaveis (so create) e
+// ordenadas por data de criacao. As regras do Firestore garantem que so as
+// partes do chamado (solicitante dono e suporte da sessao) leiam/escrevam.
+
+/** Referencia da subcolecao de mensagens de um chamado. */
+function colecaoMensagens(chamadoId) {
+  return collection(db, COLECAO, chamadoId, "mensagens");
+}
+
+/**
+ * Envia uma mensagem no chat do chamado.
+ * @param {string} chamadoId - ID do chamado.
+ * @param {object} mensagem - { autorId, autorNome, autorPapel, texto }.
+ * @returns {Promise<string>} ID da mensagem criada.
+ */
+export async function enviarMensagem(chamadoId, mensagem) {
+  const referencia = await addDoc(colecaoMensagens(chamadoId), {
+    autorId: mensagem.autorId,
+    autorNome: mensagem.autorNome,
+    autorPapel: mensagem.autorPapel,
+    texto: mensagem.texto,
+    criadoEm: serverTimestamp(),
+  });
+
+  // Marca a ultima mensagem no doc do chamado para as notificacoes avisarem o
+  // outro lado (o autor do lado oposto e quem recebe o aviso).
+  await updateDoc(doc(db, COLECAO, chamadoId), {
+    lastMessageAt: serverTimestamp(),
+    lastMessageBy: mensagem.autorPapel,
+  });
+
+  return referencia.id;
+}
+
+/**
+ * Observa em tempo real as mensagens de um chamado, da mais antiga para a mais
+ * recente (ordem natural de conversa).
+ * @param {string} chamadoId - ID do chamado.
+ * @param {(mensagens: object[]) => void} aoAtualizar - Recebe a lista atualizada.
+ * @param {(erro: Error) => void} [aoErro] - Callback de erro opcional.
+ * @returns {import("firebase/firestore").Unsubscribe} Cancela a escuta.
+ */
+export function observarMensagens(chamadoId, aoAtualizar, aoErro) {
+  const consulta = query(colecaoMensagens(chamadoId), orderBy("criadoEm", "asc"));
+  return onSnapshot(
+    consulta,
+    (snap) => aoAtualizar(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    aoErro
+  );
+}
+
+// ----------------------------------------------------------------------------
+// HISTORICO (trilha de auditoria do chamado)
+// ----------------------------------------------------------------------------
+// Subcolecao `tickets/{id}/historico`. No plano Spark nao ha Cloud Functions,
+// entao os eventos sao gravados pelo cliente (regras permitem create pelas
+// partes do chamado; update/delete continuam bloqueados). Eventos sao imutaveis.
+
+/** Referencia da subcolecao de historico de um chamado. */
+function colecaoHistorico(chamadoId) {
+  return collection(db, COLECAO, chamadoId, "historico");
+}
+
+/**
+ * Registra um evento no historico do chamado.
+ * @param {string} chamadoId - ID do chamado.
+ * @param {object} entrada - { acao, statusAnterior, statusNovo, autorId, autorNome }.
+ * @returns {Promise<string>} ID do evento criado.
+ */
+export async function registrarEvento(chamadoId, entrada) {
+  const referencia = await addDoc(colecaoHistorico(chamadoId), {
+    acao: entrada.acao,
+    statusAnterior: entrada.statusAnterior ?? null,
+    statusNovo: entrada.statusNovo ?? null,
+    autorId: entrada.autorId ?? null,
+    autorNome: entrada.autorNome ?? null,
+    criadoEm: serverTimestamp(),
+  });
+  return referencia.id;
+}
+
+/**
+ * Observa em tempo real o historico de um chamado, do mais antigo para o mais
+ * recente (ordem cronologica da timeline).
+ * @param {string} chamadoId - ID do chamado.
+ * @param {(eventos: object[]) => void} aoAtualizar - Recebe a lista atualizada.
+ * @param {(erro: Error) => void} [aoErro] - Callback de erro opcional.
+ * @returns {import("firebase/firestore").Unsubscribe} Cancela a escuta.
+ */
+export function observarHistorico(chamadoId, aoAtualizar, aoErro) {
+  const consulta = query(colecaoHistorico(chamadoId), orderBy("criadoEm", "asc"));
+  return onSnapshot(
+    consulta,
+    (snap) => aoAtualizar(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    aoErro
+  );
 }
 
 // ----------------------------------------------------------------------------

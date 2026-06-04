@@ -18,6 +18,7 @@ import {
 } from "../servicos/servicoAutenticacao.js";
 import { buscarPerfilUsuario, excluirPerfilUsuario } from "../servicos/servicoUsuario.js";
 import { excluirChamadosAbertosDoSolicitante } from "../servicos/servicoChamado.js";
+import { useStoreSessao } from "./storeSessao.js";
 import { PERFIL, rotaInicialDoPerfil } from "../constantes/perfisUsuario.js";
 
 export const useStoreAutenticacao = defineStore("autenticacao", () => {
@@ -132,7 +133,9 @@ export const useStoreAutenticacao = defineStore("autenticacao", () => {
    * Encerra a sessao e limpa o estado.
    */
   async function sair() {
+    const uid = usuario.value?.uid;
     await sairServico();
+    useStoreSessao().limpar(uid);
     usuario.value = null;
     perfil.value = null;
   }
@@ -160,6 +163,7 @@ export const useStoreAutenticacao = defineStore("autenticacao", () => {
     await excluirPerfilUsuario(u.uid);
     await excluirContaAtual();
 
+    useStoreSessao().limpar(u.uid);
     usuario.value = null;
     perfil.value = null;
   }

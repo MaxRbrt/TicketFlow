@@ -22,6 +22,16 @@
       </BotaoBase>
     </div>
 
+    <!-- Vinculo de sessao: a quem o solicitante esta conectado -->
+    <div v-if="suporteNome || codigo" class="faixa-sessao">
+      <span class="faixa-sessao-texto">
+        <KeyRound :size="15" />
+        Conectado ao suporte <strong>{{ suporteNome || "—" }}</strong>
+        <span class="faixa-sessao-codigo">codigo {{ codigo }}</span>
+      </span>
+      <button type="button" class="faixa-sessao-trocar" @click="trocarSessao">Trocar</button>
+    </div>
+
     <!-- Indicadores -->
     <ResumoPainel :cards="indicadores" />
 
@@ -59,7 +69,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-import { CirclePlus } from "@lucide/vue";
+import { CirclePlus, KeyRound } from "@lucide/vue";
 import LayoutApp from "../../componentes/layout/LayoutApp.vue";
 import ResumoPainel from "../../componentes/painel/ResumoPainel.vue";
 import TabelaChamados from "../../componentes/chamados/TabelaChamados.vue";
@@ -68,9 +78,11 @@ import EstadoVazio from "../../componentes/comuns/EstadoVazio.vue";
 import BotaoBase from "../../componentes/comuns/BotaoBase.vue";
 import { useAutenticacao } from "../../composables/useAutenticacao.js";
 import { useChamados } from "../../composables/useChamados.js";
+import { useSessao } from "../../composables/useSessao.js";
 
 const router = useRouter();
 const { usuario, nome } = useAutenticacao();
+const { codigo, suporteNome, sairDaSessao } = useSessao();
 const {
   chamados,
   carregando,
@@ -103,6 +115,12 @@ function abrirDetalhes(id) {
   router.push(`/solicitante/chamados/${id}`);
 }
 
+/** Desfaz o vinculo atual e volta para a tela de conexao (trocar de suporte). */
+function trocarSessao() {
+  sairDaSessao();
+  router.push("/solicitante/sessao");
+}
+
 // Inicia/encerra a escuta em tempo real dos chamados do usuario.
 onMounted(() => {
   if (usuario.value) {
@@ -126,6 +144,42 @@ onUnmounted(() => {
 
 .saudacao {
   margin-top: var(--espaco-sm);
+}
+
+/* ----- Faixa de vinculo de sessao ----------------------------------------- */
+.faixa-sessao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-md);
+  flex-wrap: wrap;
+  padding: 10px var(--espaco-md);
+  border-radius: var(--raio-input);
+  background: var(--vidro-fundo);
+  border: 1px solid color-mix(in srgb, var(--cor-acento) 22%, transparent);
+}
+
+.faixa-sessao-texto {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: var(--cor-texto-secundario);
+}
+
+.faixa-sessao-codigo {
+  font-family: monospace;
+  letter-spacing: 0.12em;
+  color: var(--cor-acento-claro);
+}
+
+.faixa-sessao-trocar {
+  color: var(--cor-acento-claro);
+  font-weight: var(--peso-semibold);
+}
+
+.faixa-sessao-trocar:hover {
+  text-decoration: underline;
 }
 
 .bloco-recentes {

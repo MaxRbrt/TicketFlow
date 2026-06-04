@@ -27,6 +27,9 @@
         <!-- Dados completos do chamado (read-only, com solicitante) -->
         <PainelDetalhesChamado :chamado="chamadoAtual" mostrar-solicitante />
 
+        <!-- Conversa com o solicitante -->
+        <ChatChamado :chamado-id="id" @estado="aoEstadoChat" />
+
         <!-- Painel de atendimento -->
         <section class="painel bloco-atendimento">
           <header class="bloco-cabecalho">
@@ -60,24 +63,6 @@
                 @click="aplicarStatus"
               >
                 Atualizar status
-              </BotaoBase>
-            </div>
-
-            <!-- Resposta ao solicitante -->
-            <div class="linha-campo">
-              <AreaTextoBase
-                v-model="resposta"
-                label="Resposta ao solicitante"
-                placeholder="Mensagem visivel ao solicitante..."
-                :linhas="3"
-              />
-              <BotaoBase
-                variante="secundario"
-                :carregando="processando"
-                @click="salvarResposta"
-              >
-                <template #icone><Send :size="16" /></template>
-                Enviar resposta
               </BotaoBase>
             </div>
 
@@ -129,6 +114,9 @@
             Assuma o chamado para iniciar o atendimento.
           </p>
         </section>
+
+        <!-- Linha do tempo do chamado -->
+        <HistoricoChamado :chamado-id="id" />
       </template>
     </div>
 
@@ -159,9 +147,11 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { ArrowLeft, Hand, Send, Wrench, CircleCheck, Ban, Trash2 } from "@lucide/vue";
+import { ArrowLeft, Hand, Wrench, CircleCheck, Ban, Trash2 } from "@lucide/vue";
 import LayoutApp from "../../componentes/layout/LayoutApp.vue";
 import PainelDetalhesChamado from "../../componentes/chamados/PainelDetalhesChamado.vue";
+import ChatChamado from "../../componentes/chamados/ChatChamado.vue";
+import HistoricoChamado from "../../componentes/chamados/HistoricoChamado.vue";
 import SeletorBase from "../../componentes/comuns/SeletorBase.vue";
 import AreaTextoBase from "../../componentes/comuns/AreaTextoBase.vue";
 import BotaoBase from "../../componentes/comuns/BotaoBase.vue";
@@ -181,7 +171,6 @@ const {
   pararEscutaItem,
   assumir,
   mudarStatus,
-  responder,
   registrarSolucao,
   finalizar,
   excluir,
@@ -191,12 +180,18 @@ const { marcarLido } = useNotificacaoSuporte();
 
 // Campos editaveis locais (sincronizados a partir do chamado em tempo real).
 const statusSelecionado = ref(STATUS.ABERTO);
-const resposta = ref("");
 const solucao = ref("");
+
+// Estado do chat: o suporte ja respondeu ao solicitante? (libera finalizar)
+const respondeuSuporte = ref(false);
 
 const processando = ref(false);
 const confirmarCancelar = ref(false);
 const confirmarExcluir = ref(false);
+
+function aoEstadoChat({ respondeuSuporte: respondeu }) {
+  respondeuSuporte.value = respondeu;
+}
 
 // So atende apos assumir (ter responsavel).
 const podeAtender = computed(() => !!chamadoAtual.value?.assignedToId);
@@ -209,7 +204,6 @@ watch(
   (c) => {
     if (!c) return;
     statusSelecionado.value = c.status;
-    resposta.value = c.supportResponse || "";
     solucao.value = c.resolution || "";
   },
   { immediate: true }
@@ -231,13 +225,6 @@ async function aplicarStatus() {
   processando.value = false;
 }
 
-/** Salva apenas a resposta ao solicitante. */
-async function salvarResposta() {
-  processando.value = true;
-  await responder(id.value, resposta.value);
-  processando.value = false;
-}
-
 /** Salva apenas a solucao aplicada. */
 async function salvarSolucao() {
   processando.value = true;
@@ -245,10 +232,13 @@ async function salvarSolucao() {
   processando.value = false;
 }
 
-/** Finaliza o atendimento (exige resposta E solucao - regra 25.4/RF019). */
+/** Finaliza o atendimento (exige resposta no chat E solucao - RF019). */
 async function finalizarAtendimento() {
   processando.value = true;
-  await finalizar(id.value, { resposta: resposta.value, solucao: solucao.value });
+  await finalizar(id.value, {
+    solucao: solucao.value,
+    respondeuSuporte: respondeuSuporte.value,
+  });
   processando.value = false;
 }
 

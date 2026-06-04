@@ -54,8 +54,10 @@ import EstadoCarregamento from "../../componentes/comuns/EstadoCarregamento.vue"
 import EstadoVazio from "../../componentes/comuns/EstadoVazio.vue";
 import BotaoBase from "../../componentes/comuns/BotaoBase.vue";
 import { useChamados } from "../../composables/useChamados.js";
+import { useAutenticacao } from "../../composables/useAutenticacao.js";
 
 const router = useRouter();
+const { usuario } = useAutenticacao();
 const { chamados, carregando, escutarTodos, pararEscutaLista } = useChamados();
 
 const busca = ref("");
@@ -86,7 +88,9 @@ function abrirDetalhes(id) {
 }
 
 onMounted(() => {
-  escutarTodos();
+  if (usuario.value) {
+    escutarTodos(usuario.value.uid);
+  }
 });
 
 onUnmounted(() => {

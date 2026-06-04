@@ -60,6 +60,7 @@ import {
   Ticket,
   TicketPlus,
   Zap,
+  Users,
   UserRound,
   LogOut,
 } from "@lucide/vue";
@@ -84,6 +85,7 @@ const MENU_SUPORTE = [
   { rota: "/suporte/painel", rotulo: "Painel", icone: LayoutDashboard },
   { rota: "/suporte/chamados", rotulo: "Todos os Chamados", icone: Ticket },
   { rota: "/suporte/chamados/urgentes", rotulo: "Urgentes", icone: Zap },
+  { rota: "/suporte/solicitantes", rotulo: "Solicitantes", icone: Users },
   { rota: "/perfil", rotulo: "Perfil", icone: UserRound },
 ];
 

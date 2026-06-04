@@ -24,6 +24,38 @@
       </BotaoBase>
     </div>
 
+    <!-- Codigo de sessao: o suporte divulga para o solicitante se vincular -->
+    <section class="cartao-sessao painel">
+      <div class="sessao-info">
+        <span class="sessao-rotulo">
+          <KeyRound :size="16" /> Codigo de atendimento
+        </span>
+        <p class="texto-secundario">
+          Informe este codigo ao solicitante para que os chamados dele cheguem ate voce.
+        </p>
+      </div>
+
+      <div v-if="codigo" class="sessao-codigo-bloco">
+        <strong class="sessao-codigo">{{ codigo }}</strong>
+        <BotaoBase variante="fantasma" :aria-label="copiado ? 'Copiado' : 'Copiar codigo'" @click="copiarCodigo">
+          <template #icone>
+            <Check v-if="copiado" :size="16" />
+            <Copy v-else :size="16" />
+          </template>
+          {{ copiado ? "Copiado" : "Copiar" }}
+        </BotaoBase>
+        <BotaoBase variante="fantasma" :carregando="gerandoCodigo" @click="gerarCodigo">
+          <template #icone><RefreshCw :size="16" /></template>
+          Gerar novo
+        </BotaoBase>
+      </div>
+
+      <BotaoBase v-else variante="primario" :carregando="gerandoCodigo" @click="gerarCodigo">
+        <template #icone><KeyRound :size="18" /></template>
+        Gerar codigo
+      </BotaoBase>
+    </section>
+
     <!-- Indicadores -->
     <ResumoPainel :cards="indicadores" />
 
@@ -76,9 +108,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import { ListChecks } from "@lucide/vue";
+import { ListChecks, KeyRound, Copy, RefreshCw, Check } from "@lucide/vue";
 import LayoutApp from "../../componentes/layout/LayoutApp.vue";
 import ResumoPainel from "../../componentes/painel/ResumoPainel.vue";
 import TabelaChamados from "../../componentes/chamados/TabelaChamados.vue";
@@ -88,11 +120,13 @@ import EstadoVazio from "../../componentes/comuns/EstadoVazio.vue";
 import BotaoBase from "../../componentes/comuns/BotaoBase.vue";
 import { useAutenticacao } from "../../composables/useAutenticacao.js";
 import { useChamados } from "../../composables/useChamados.js";
+import { useSessao } from "../../composables/useSessao.js";
+import { useNotificacao } from "../../composables/useNotificacao.js";
 import { STATUS } from "../../constantes/statusChamado.js";
 import { PRIORIDADE } from "../../constantes/prioridadesChamado.js";
 
 const router = useRouter();
-const { nome } = useAutenticacao();
+const { nome, usuario } = useAutenticacao();
 const {
   chamados,
   carregando,
@@ -103,8 +137,31 @@ const {
   escutarTodos,
   pararEscutaLista,
 } = useChamados();
+const { codigo, carregarSessaoSuporte, gerarCodigoSuporte } = useSessao();
+const notificacao = useNotificacao();
 
 const primeiroNome = computed(() => (nome.value ? nome.value.split(" ")[0] : "suporte"));
+
+// ----- Codigo de sessao (vinculo com solicitantes) -----------------------
+const gerandoCodigo = ref(false);
+const copiado = ref(false);
+
+async function gerarCodigo() {
+  gerandoCodigo.value = true;
+  await gerarCodigoSuporte();
+  gerandoCodigo.value = false;
+}
+
+async function copiarCodigo() {
+  if (!codigo.value) return;
+  try {
+    await navigator.clipboard.writeText(codigo.value);
+    copiado.value = true;
+    setTimeout(() => (copiado.value = false), 1500);
+  } catch {
+    notificacao.info(`Codigo: ${codigo.value}`);
+  }
+}
 
 // Cards de indicadores (secao 15.7): total, abertos, em andamento, urgentes.
 const indicadores = computed(() => [
@@ -137,9 +194,12 @@ function abrirDetalhes(id) {
   router.push(`/suporte/chamados/${id}`);
 }
 
-// Inicia/encerra a escuta em tempo real de todos os chamados.
+// Inicia/encerra a escuta em tempo real dos chamados das sessoes do suporte.
 onMounted(() => {
-  escutarTodos();
+  if (usuario.value) {
+    escutarTodos(usuario.value.uid);
+  }
+  carregarSessaoSuporte();
 });
 
 onUnmounted(() => {
@@ -158,6 +218,49 @@ onUnmounted(() => {
 
 .saudacao {
   margin-top: var(--espaco-sm);
+}
+
+/* ----- Cartao do codigo de sessao ----------------------------------------- */
+.cartao-sessao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-md);
+  flex-wrap: wrap;
+}
+
+.sessao-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.sessao-rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: var(--peso-semibold);
+  color: var(--cor-acento-claro);
+}
+
+.sessao-codigo-bloco {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  flex-wrap: wrap;
+}
+
+.sessao-codigo {
+  font-family: var(--fonte-display, monospace);
+  font-size: 28px;
+  font-weight: var(--peso-bold);
+  letter-spacing: 0.18em;
+  color: var(--cor-texto-principal);
+  padding: 6px 16px;
+  border-radius: var(--raio-input);
+  background: var(--vidro-fundo-forte, var(--vidro-fundo));
+  border: 1px solid color-mix(in srgb, var(--cor-acento) 28%, transparent);
 }
 
 .bloco-cabecalho {

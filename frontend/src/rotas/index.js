@@ -14,6 +14,7 @@
 
 import { createRouter, createWebHistory } from "vue-router";
 import { useStoreAutenticacao } from "../stores/storeAutenticacao.js";
+import { useStoreSessao } from "../stores/storeSessao.js";
 import { PERFIL } from "../constantes/perfisUsuario.js";
 
 // Paginas publicas (Etapa 8).
@@ -25,11 +26,13 @@ import PainelSolicitante from "../paginas/solicitante/PainelSolicitante.vue";
 import MeusChamados from "../paginas/solicitante/MeusChamados.vue";
 import NovoChamado from "../paginas/solicitante/NovoChamado.vue";
 import DetalhesChamadoSolicitante from "../paginas/solicitante/DetalhesChamadoSolicitante.vue";
+import EntrarSessao from "../paginas/solicitante/EntrarSessao.vue";
 
 // Paginas do suporte (Etapa 10).
 import PainelSuporte from "../paginas/suporte/PainelSuporte.vue";
 import TodosChamados from "../paginas/suporte/TodosChamados.vue";
 import ChamadosUrgentes from "../paginas/suporte/ChamadosUrgentes.vue";
+import MeusSolicitantes from "../paginas/suporte/MeusSolicitantes.vue";
 import DetalhesChamadoSuporte from "../paginas/suporte/DetalhesChamadoSuporte.vue";
 
 // Paginas compartilhadas (Etapa 11).
@@ -64,35 +67,42 @@ const routes = [
   },
 
   // ----- Solicitante (perfil requester) ---------------------------------
+  // `exigeSessao`: so acessa apos vincular um codigo de atendimento do suporte.
+  {
+    path: "/solicitante/sessao",
+    name: "solicitante-sessao",
+    component: EntrarSessao,
+    meta: { requiresAuth: true, perfil: PERFIL.SOLICITANTE, ehSessao: true, titulo: "Conectar ao suporte" },
+  },
   {
     path: "/solicitante/painel",
     name: "solicitante-painel",
     component: PainelSolicitante,
-    meta: { requiresAuth: true, perfil: PERFIL.SOLICITANTE, titulo: "Meu Painel" },
+    meta: { requiresAuth: true, perfil: PERFIL.SOLICITANTE, exigeSessao: true, titulo: "Meu Painel" },
   },
   {
     path: "/solicitante/chamados",
     name: "solicitante-chamados",
     component: MeusChamados,
-    meta: { requiresAuth: true, perfil: PERFIL.SOLICITANTE, titulo: "Meus Chamados" },
+    meta: { requiresAuth: true, perfil: PERFIL.SOLICITANTE, exigeSessao: true, titulo: "Meus Chamados" },
   },
   {
     path: "/solicitante/chamados/novo",
     name: "solicitante-novo-chamado",
     component: NovoChamado,
-    meta: { requiresAuth: true, perfil: PERFIL.SOLICITANTE, titulo: "Novo Chamado" },
+    meta: { requiresAuth: true, perfil: PERFIL.SOLICITANTE, exigeSessao: true, titulo: "Novo Chamado" },
   },
   {
     path: "/solicitante/chamados/:id/editar",
     name: "solicitante-editar-chamado",
     component: NovoChamado,
-    meta: { requiresAuth: true, perfil: PERFIL.SOLICITANTE, titulo: "Editar Chamado" },
+    meta: { requiresAuth: true, perfil: PERFIL.SOLICITANTE, exigeSessao: true, titulo: "Editar Chamado" },
   },
   {
     path: "/solicitante/chamados/:id",
     name: "solicitante-detalhes-chamado",
     component: DetalhesChamadoSolicitante,
-    meta: { requiresAuth: true, perfil: PERFIL.SOLICITANTE, titulo: "Detalhes do Chamado" },
+    meta: { requiresAuth: true, perfil: PERFIL.SOLICITANTE, exigeSessao: true, titulo: "Detalhes do Chamado" },
   },
 
   // ----- Suporte (perfil support) ---------------------------------------
@@ -113,6 +123,12 @@ const routes = [
     name: "suporte-urgentes",
     component: ChamadosUrgentes,
     meta: { requiresAuth: true, perfil: PERFIL.SUPORTE, titulo: "Chamados Urgentes" },
+  },
+  {
+    path: "/suporte/solicitantes",
+    name: "suporte-solicitantes",
+    component: MeusSolicitantes,
+    meta: { requiresAuth: true, perfil: PERFIL.SUPORTE, titulo: "Meus Solicitantes" },
   },
   {
     path: "/suporte/chamados/:id",
@@ -187,6 +203,22 @@ router.beforeEach(async (to) => {
   // 4. Rota restrita a um perfil: bloqueia perfil incorreto.
   if (to.meta.perfil && auth.papel !== to.meta.perfil) {
     return "/nao-autorizado";
+  }
+
+  // 5. Vinculo de sessao (solicitante): garante que o solicitante esteja
+  // conectado a um suporte (via codigo) antes de usar a area de chamados.
+  if (auth.estaLogado && auth.ehSolicitante && auth.usuario?.uid) {
+    const sessao = useStoreSessao();
+    sessao.carregarDoStorage(auth.usuario.uid);
+
+    // Rota interna exige vinculo: sem sessao ativa -> tela de conexao.
+    if (to.meta.exigeSessao && !sessao.ativa) {
+      return "/solicitante/sessao";
+    }
+    // Ja conectado e indo para a tela de conexao -> manda para o painel.
+    if (to.meta.ehSessao && sessao.ativa) {
+      return "/solicitante/painel";
+    }
   }
 
   // Caso contrario, segue normalmente.

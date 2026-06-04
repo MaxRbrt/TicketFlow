@@ -11,11 +11,36 @@
 import { storeToRefs } from "pinia";
 import { useStoreChamado } from "../stores/storeChamado.js";
 import { useNotificacao } from "./useNotificacao.js";
+import { useAutenticacao } from "./useAutenticacao.js";
+import { registrarEvento } from "../servicos/servicoChamado.js";
 import { STATUS } from "../constantes/statusChamado.js";
 
 export function useChamados() {
   const store = useStoreChamado();
   const notificacao = useNotificacao();
+  const { usuario, nome } = useAutenticacao();
+
+  // ----- Historico (trilha de auditoria, gravada pelo cliente no Spark) -----
+
+  /** Autor do evento = usuario logado. */
+  function autorEvento() {
+    return { autorId: usuario.value?.uid || null, autorNome: nome.value || null };
+  }
+
+  /** Status atual do chamado em foco (para registrar a transicao), se for o mesmo. */
+  function statusAnteriorDe(id) {
+    const atual = store.chamadoAtual;
+    return atual && atual.id === id ? atual.status : null;
+  }
+
+  /** Grava um evento no historico sem quebrar a acao em caso de falha. */
+  async function logEvento(id, entrada) {
+    try {
+      await registrarEvento(id, entrada);
+    } catch (e) {
+      console.error("Falha ao registrar evento no historico:", e?.code || e);
+    }
+  }
 
   // Estado e indicadores reativos da store.
   const {
@@ -90,8 +115,17 @@ export function useChamados() {
 
   /** Cancela um chamado (solicitante desiste enquanto aberto). */
   function cancelar(id) {
+    const anterior = statusAnteriorDe(id);
     return executar(
-      () => store.mudarStatus(id, STATUS.CANCELADO),
+      async () => {
+        await store.mudarStatus(id, STATUS.CANCELADO);
+        await logEvento(id, {
+          acao: "status_alterado",
+          statusAnterior: anterior,
+          statusNovo: STATUS.CANCELADO,
+          ...autorEvento(),
+        });
+      },
       "Chamado cancelado.",
       "Nao foi possivel cancelar o chamado."
     );
@@ -101,8 +135,18 @@ export function useChamados() {
 
   /** Suporte assume o chamado (vira responsavel e move para em andamento). */
   function assumir(id, suporte) {
+    const anterior = statusAnteriorDe(id);
     return executar(
-      () => store.assumir(id, suporte),
+      async () => {
+        await store.assumir(id, suporte);
+        await logEvento(id, {
+          acao: "assumido",
+          statusAnterior: anterior,
+          statusNovo: STATUS.EM_ANDAMENTO,
+          autorId: suporte.uid,
+          autorNome: suporte.nome,
+        });
+      },
       "Chamado assumido.",
       "Nao foi possivel assumir o chamado."
     );
@@ -110,8 +154,17 @@ export function useChamados() {
 
   /** Altera o status do chamado. */
   function mudarStatus(id, status) {
+    const anterior = statusAnteriorDe(id);
     return executar(
-      () => store.mudarStatus(id, status),
+      async () => {
+        await store.mudarStatus(id, status);
+        await logEvento(id, {
+          acao: "status_alterado",
+          statusAnterior: anterior,
+          statusNovo: status,
+          ...autorEvento(),
+        });
+      },
       "Status atualizado com sucesso.",
       "Nao foi possivel atualizar o status."
     );
@@ -145,13 +198,14 @@ export function useChamados() {
 
   /**
    * Finaliza o atendimento (status Resolvido). Regra de negocio (RF019/25.4):
-   * exige resposta ao solicitante E solucao aplicada. Grava os tres campos.
+   * exige que o suporte ja tenha respondido ao solicitante (pelo menos uma
+   * mensagem no chat) E que a solucao aplicada esteja registrada.
    * @param {string} id - ID do chamado.
-   * @param {object} dados - { resposta, solucao }.
+   * @param {object} dados - { solucao, respondeuSuporte }.
    */
-  async function finalizar(id, { resposta, solucao }) {
-    if (!resposta || !resposta.trim()) {
-      notificacao.erro("Informe a resposta ao solicitante antes de finalizar.");
+  async function finalizar(id, { solucao, respondeuSuporte }) {
+    if (!respondeuSuporte) {
+      notificacao.erro("Responda ao solicitante no chat antes de finalizar.");
       return { ok: false };
     }
     if (!solucao || !solucao.trim()) {
@@ -159,11 +213,17 @@ export function useChamados() {
       return { ok: false };
     }
 
+    const anterior = statusAnteriorDe(id);
     return executar(
       async () => {
-        await store.responder(id, resposta.trim());
         await store.registrarSolucaoChamado(id, solucao.trim());
         await store.mudarStatus(id, STATUS.RESOLVIDO);
+        await logEvento(id, {
+          acao: "status_alterado",
+          statusAnterior: anterior,
+          statusNovo: STATUS.RESOLVIDO,
+          ...autorEvento(),
+        });
       },
       "Atendimento finalizado com sucesso.",
       "Nao foi possivel finalizar o atendimento."
