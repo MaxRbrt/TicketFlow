@@ -5,6 +5,9 @@ node_modules/
 frontend/dist/
 dist/
 
+# Mockups temporarios do brainstorming visual
+.superpowers/
+
 # Cache do Firebase CLI
 .firebase/
 *.log
