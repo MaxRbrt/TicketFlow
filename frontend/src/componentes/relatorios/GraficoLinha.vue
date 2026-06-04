@@ -76,10 +76,19 @@ const opcoes = computed(() => ({
 <style scoped>
 .grafico {
   position: relative;
+  width: 100%;
   height: 240px;
 }
 
 .grafico.mini {
   height: 56px;
+}
+
+/* Canvas fora do fluxo: impede que a largura do canvas realimente o container
+   (loop de resize do Chart.js que estourava o card e deixava rastro de linhas). */
+.grafico :deep(canvas) {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 </style>

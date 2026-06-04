@@ -113,6 +113,7 @@ const tempoMedioSub = computed(() => {
   display: flex;
   flex-direction: column;
   gap: var(--espaco-md);
+  min-width: 0;
 }
 
 .bloco-cab {

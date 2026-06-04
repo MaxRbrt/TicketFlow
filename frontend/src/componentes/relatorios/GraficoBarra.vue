@@ -66,6 +66,14 @@ const opcoes = computed(() => ({
 <style scoped>
 .grafico {
   position: relative;
+  width: 100%;
   height: 240px;
+}
+
+/* Canvas fora do fluxo: evita o loop de resize do Chart.js (estouro do card). */
+.grafico :deep(canvas) {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 </style>
