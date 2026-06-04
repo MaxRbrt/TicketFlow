@@ -51,6 +51,8 @@ const dados = computed(() => ({
 const opcoes = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
+  animation: false,
+  resizeDelay: 120,
   plugins: { legend: { display: false } },
   scales: {
     x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: false } },
@@ -68,6 +70,7 @@ const opcoes = computed(() => ({
   position: relative;
   width: 100%;
   height: 240px;
+  overflow: hidden;
 }
 
 /* Canvas fora do fluxo: evita o loop de resize do Chart.js (estouro do card). */

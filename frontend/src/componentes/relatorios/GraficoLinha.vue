@@ -55,6 +55,11 @@ const dados = computed(() => ({
 const opcoes = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
+  // Sem animacao: evita o rastro de frames (linhas "raiadas" saindo do pico)
+  // e qualquer realimentacao de resize durante a animacao de entrada.
+  animation: false,
+  // Debounce do ResizeObserver: quebra eventual loop de medicao do container.
+  resizeDelay: 120,
   plugins: { legend: { display: false } },
   scales: {
     x: {
@@ -78,6 +83,7 @@ const opcoes = computed(() => ({
   position: relative;
   width: 100%;
   height: 240px;
+  overflow: hidden;
 }
 
 .grafico.mini {
