@@ -41,6 +41,11 @@ import PerfilUsuario from "../paginas/compartilhadas/PerfilUsuario.vue";
 import PaginaNaoAutorizada from "../paginas/compartilhadas/PaginaNaoAutorizada.vue";
 import PaginaNaoEncontrada from "../paginas/compartilhadas/PaginaNaoEncontrada.vue";
 
+// Paginas da Base de Conhecimento (leitura compartilhada; edicao so do suporte).
+import PaginaBaseConhecimento from "../paginas/compartilhadas/PaginaBaseConhecimento.vue";
+import PaginaArtigoDetalhe from "../paginas/compartilhadas/PaginaArtigoDetalhe.vue";
+import EditorArtigo from "../paginas/suporte/EditorArtigo.vue";
+
 // ----------------------------------------------------------------------------
 // Tabela de rotas
 // ----------------------------------------------------------------------------
@@ -137,6 +142,19 @@ const routes = [
     component: Relatorios,
     meta: { requiresAuth: true, perfil: PERFIL.SUPORTE, titulo: "Relatorios" },
   },
+  // Edicao de artigos da base de conhecimento (apenas suporte).
+  {
+    path: "/suporte/artigos/novo",
+    name: "suporte-artigo-novo",
+    component: EditorArtigo,
+    meta: { requiresAuth: true, perfil: PERFIL.SUPORTE, titulo: "Novo artigo" },
+  },
+  {
+    path: "/suporte/artigos/:id/editar",
+    name: "suporte-artigo-editar",
+    component: EditorArtigo,
+    meta: { requiresAuth: true, perfil: PERFIL.SUPORTE, titulo: "Editar artigo" },
+  },
   {
     path: "/suporte/chamados/:id",
     name: "suporte-detalhes-chamado",
@@ -150,6 +168,20 @@ const routes = [
     name: "perfil",
     component: PerfilUsuario,
     meta: { requiresAuth: true, titulo: "Meu Perfil" },
+  },
+  // Base de Conhecimento: leitura liberada a qualquer usuario autenticado
+  // (sem exigir sessao - o solicitante pode consultar a ajuda antes de conectar).
+  {
+    path: "/base-conhecimento",
+    name: "base-conhecimento",
+    component: PaginaBaseConhecimento,
+    meta: { requiresAuth: true, titulo: "Base de Conhecimento" },
+  },
+  {
+    path: "/base-conhecimento/:id",
+    name: "base-conhecimento-artigo",
+    component: PaginaArtigoDetalhe,
+    meta: { requiresAuth: true, titulo: "Artigo" },
   },
   {
     path: "/nao-autorizado",

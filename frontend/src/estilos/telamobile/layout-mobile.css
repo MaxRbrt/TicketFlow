@@ -17,8 +17,8 @@
   }
 
   body {
-    min-width: 320px;
-    overflow-x: hidden;
+    min-width: 0;
+    overflow-x: clip;
     overscroll-behavior-y: contain;
   }
 
@@ -156,6 +156,8 @@
 @media (max-width: 760px) {
   /* ----- Telas publicas (login/cadastro) -------------------------------- */
   body .auth.auth {
+    width: 100%;
+    max-width: 100dvw;
     min-height: 100dvh;
     align-items: flex-start;
     padding: 18px var(--mobile-page-padding);
@@ -170,13 +172,28 @@
   }
 
   body .auth-cartao.auth-cartao {
-    max-width: 100%;
+    width: 100%;
+    max-width: min(452px, calc(100dvw - (2 * var(--mobile-page-padding))));
+    min-width: 0;
+    margin-inline: auto;
     padding: var(--mobile-panel-padding);
     border-radius: var(--raio-painel);
   }
 
   body .auth-stack.auth-stack {
+    min-width: 0;
     gap: var(--espaco-lg);
+  }
+
+  body .auth-conteudo.auth-conteudo,
+  body .auth-rodape.auth-rodape {
+    min-width: 0;
+  }
+
+  body .auth .form.form,
+  body .auth .form-linha.form-linha {
+    width: 100%;
+    min-width: 0;
   }
 
   body .auth-marca.auth-marca {

@@ -85,7 +85,8 @@
 /* ----- Variante de perigo (excluir) --------------------------------------- */
 .botao-perigo {
   background: var(--cor-erro);
-  color: #fff;
+  color: var(--cor-texto-sobre-acento);
+  font-weight: var(--peso-bold);
 }
 
 .botao-perigo:hover:not(:disabled) {

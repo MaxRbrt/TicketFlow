@@ -8,6 +8,17 @@ dist/
 # Mockups temporarios do brainstorming visual
 .superpowers/
 
+# Apoio local de IA / contexto privado
+apoio-ia/
+AGENTS.md
+PlanoProximosPassos.md
+ticketflow-especificacao-projeto.md
+docs/superpowers/
+
+# Artefatos locais de IA / auditoria visual
+mobile-audit/
+chrome-smoke.png
+
 # Cache do Firebase CLI
 .firebase/
 *.log

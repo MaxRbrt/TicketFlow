@@ -179,6 +179,7 @@ onUnmounted(parar);
 
 /* ----- Baloes ------------------------------------------------------------- */
 .chat-balao {
+  min-width: 0;
   max-width: 78%;
   padding: var(--espaco-sm) var(--espaco-md);
   border-radius: var(--raio-card);
@@ -200,6 +201,7 @@ onUnmounted(parar);
 
 .chat-meta {
   display: flex;
+  min-width: 0;
   align-items: baseline;
   gap: 8px;
   flex-wrap: wrap;
@@ -207,19 +209,25 @@ onUnmounted(parar);
 }
 
 .chat-autor {
+  min-width: 0;
   font-size: var(--fonte-pequena);
   font-weight: var(--peso-semibold);
+  overflow-wrap: anywhere;
 }
 
 .chat-papel {
+  min-width: 0;
   font-size: var(--fonte-pequena);
   color: var(--cor-acento-claro);
+  overflow-wrap: anywhere;
 }
 
 .chat-hora {
+  min-width: 0;
   font-size: var(--fonte-pequena);
   color: var(--cor-texto-secundario);
   margin-left: auto;
+  overflow-wrap: anywhere;
 }
 
 .chat-texto {
@@ -269,6 +277,14 @@ onUnmounted(parar);
   }
   .chat-balao {
     max-width: 90%;
+  }
+  .chat-meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .chat-hora {
+    margin-left: 0;
   }
 }
 </style>

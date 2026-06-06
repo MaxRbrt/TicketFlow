@@ -15,7 +15,7 @@
   ============================================================================
 -->
 <template>
-  <header class="topbar vidro">
+  <header class="topbar vidro" :class="{ 'topbar-com-busca': mostrarBusca }">
     <!-- Esquerda: menu (mobile) + titulo -->
     <div class="topbar-esquerda">
       <button class="botao-icone topbar-menu" type="button" aria-label="Abrir menu" @click="$emit('abrir-menu')">
@@ -196,6 +196,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .topbar {
+  --notif-painel-top-mobile: calc(var(--mobile-page-padding) + var(--altura-topbar) + 8px);
   display: flex;
   align-items: center;
   gap: var(--espaco-md);
@@ -499,12 +500,17 @@ onBeforeUnmount(() => {
 
   .notif-painel {
     position: fixed;
-    top: calc(var(--mobile-page-padding) + var(--altura-topbar) + 8px);
+    top: var(--notif-painel-top-mobile);
     right: var(--mobile-page-padding);
     left: var(--mobile-page-padding);
     width: auto;
     max-height: min(62dvh, 420px);
     border-radius: var(--raio-card);
+  }
+
+  /* A busca ocupa uma segunda linha no mobile; o painel abre abaixo dela. */
+  .topbar-com-busca {
+    --notif-painel-top-mobile: calc(var(--mobile-page-padding) + 126px);
   }
 
   .notif-item {

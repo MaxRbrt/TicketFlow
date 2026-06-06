@@ -1,186 +1,236 @@
-<div align="center">
+# TicketFlow
 
-# 🎫 TicketFlow
+Sistema web para gerenciamento de chamados de suporte, desenvolvido com Vue 3,
+Vite, Pinia e Firebase.
 
-### Sistema de Gerenciamento de Chamados de Suporte
+Demo: https://projetoticketflow-c3b5c.web.app
 
-Aplicação web para abrir, acompanhar e resolver chamados de suporte, com dois perfis de acesso (**solicitante** e **suporte**), autenticação e dados em tempo real.
+## Sobre o projeto
 
-[![Vue](https://img.shields.io/badge/Vue-3-42b883?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
-[![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Firebase](https://img.shields.io/badge/Firebase-Auth%20%2B%20Firestore-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![Pinia](https://img.shields.io/badge/Pinia-state-FFD859?logo=vuedotjs&logoColor=black)](https://pinia.vuejs.org/)
+O TicketFlow centraliza a abertura, acompanhamento e resolucao de chamados entre
+solicitantes e equipe de suporte. O sistema possui autenticacao, controle de
+acesso por perfil, dados em tempo real no Cloud Firestore, chat por chamado,
+relatorios operacionais e uma base de conhecimento para autoatendimento.
 
-🔗 **Demo:** https://projetoticketflow-c3b5c.web.app
+Fluxo principal:
 
-</div>
+```txt
+solicitante entra em uma sessao de suporte
+-> abre um chamado
+-> suporte acompanha e conversa pelo chat
+-> status e resposta sao atualizados
+-> solucao e finalizacao ficam registradas
+```
 
----
+## Funcionalidades
 
-## 📖 Sobre
+### Solicitante
 
-O **TicketFlow** centraliza a comunicação entre quem precisa de suporte e a equipe que resolve os chamados. Em vez de problemas dispersos em conversas informais, e-mails perdidos ou mensagens sem controle, tudo passa por um fluxo único e rastreável:
+- Cadastro, login, logout e recuperacao de senha.
+- Entrada em uma sessao de atendimento por codigo informado pelo suporte.
+- Abertura de chamados com titulo, descricao, categoria, prioridade e local.
+- Listagem dos proprios chamados com filtros e busca.
+- Edicao, cancelamento e exclusao de chamados enquanto ainda estao abertos.
+- Tela de detalhes com resposta, solucao, historico e chat em tempo real.
+- Notificacoes quando o suporte atualiza chamados.
+- Consulta da Base de Conhecimento antes ou depois de abrir chamados.
 
-> **problema relatado → chamado aberto → suporte acompanha → status atualizado → solução registrada → chamado finalizado**
+### Suporte
 
-Projeto desenvolvido com **Vue 3 (Composition API)** e **Firebase**, atendendo a um escopo acadêmico: autenticação por e-mail/senha, rotas protegidas por perfil, persistência no Cloud Firestore e CRUD completo.
+- Painel com indicadores de chamados, urgencia e resumo operacional.
+- Criacao e controle da propria sessao de atendimento.
+- Visualizacao dos chamados vinculados as suas sessoes.
+- Filtros, busca e destaque para chamados urgentes.
+- Assumir chamados, atualizar status, responder e registrar solucao.
+- Chat em tempo real com o solicitante.
+- Relatorios com volume por periodo, setor/local, tempo medio de resolucao,
+  taxa de resolucao, backlog e ranking de solicitantes.
+- Base de Conhecimento com criacao, leitura, edicao e exclusao de artigos
+  publicados pelo proprio suporte.
 
----
+### Controle de acesso
 
-## ✨ Funcionalidades
+- Rotas protegidas por autenticacao.
+- Areas separadas para solicitante e suporte.
+- Solicitante precisa estar vinculado a uma sessao antes de usar a area de
+  chamados.
+- Regras do Firestore reforcam as permissoes no servidor.
 
-### 👤 Solicitante
-- Cadastro, login e logout
-- Abrir chamados (título, descrição, categoria, prioridade, local)
-- Listar **apenas os próprios** chamados, com filtros (status/prioridade/categoria) e busca
-- Ver detalhes em tempo real (resposta e solução do suporte)
-- Editar e excluir chamados **enquanto abertos**; cancelar chamado
-- Sino de notificações: avisa quando o suporte atualiza um chamado seu
-
-### 🛠️ Suporte
-- Visualizar **todos** os chamados, com filtros, busca e destaque para urgentes
-- Painel com indicadores (abertos / em andamento / urgentes / resolvidos)
-- Assumir chamado (vira responsável → "em andamento")
-- Atualizar status, responder ao solicitante e registrar a solução aplicada
-- Finalizar atendimento (exige resposta **e** solução)
-- Cancelar ou excluir chamados (com confirmação)
-- Sino de notificações: avisa chamados novos aguardando atendimento
-
-### 🔒 Controle de acesso
-- Rotas internas bloqueadas para quem não está autenticado
-- Cada perfil acessa somente a sua área (guards no Vue Router)
-- Reforço no servidor via **Firestore Security Rules**
-
----
-
-## 🧱 Stack
+## Stack
 
 | Camada | Tecnologia |
-|---|---|
-| Front-end | Vue 3 (Composition API) + Vite |
+| --- | --- |
+| Front-end | Vue 3 + Vite |
 | Estado global | Pinia |
-| Rotas | Vue Router (com guards de auth/perfil) |
-| Backend (BaaS) | Firebase Authentication + Cloud Firestore |
-| Ícones | @lucide/vue |
-| Hosting | Firebase Hosting |
-| Functions (opcional) | Cloud Functions — auditoria e claims (plano Blaze, fora do deploy free) |
+| Rotas | Vue Router |
+| Backend | Firebase Authentication + Cloud Firestore |
+| Graficos | Chart.js + vue-chartjs |
+| Icones | @lucide/vue |
+| Hospedagem | Firebase Hosting |
 
----
-
-## 📁 Estrutura
+## Estrutura
 
 ```txt
 TicketFlow/
-├── frontend/                 # Aplicação Vue 3 + Vite
-│   └── src/
-│       ├── componentes/      # comuns, layout, chamados, painel
-│       ├── composables/      # useAutenticacao, useChamados, useNotificacao*
-│       ├── constantes/       # status, prioridades, categorias, perfis
-│       ├── estilos/          # design system modular (tema escuro "Twilight")
-│       ├── firebase/         # configuracaoFirebase.js
-│       ├── paginas/          # publicas, solicitante, suporte, compartilhadas
-│       ├── rotas/            # tabela de rotas + guards
-│       ├── servicos/         # camada de acesso ao Firebase
-│       ├── stores/           # Pinia (auth, chamados)
-│       └── utils/            # formatação, ordenação, validação
-│
-├── backend/
-│   ├── firebase/
-│   │   ├── regras/firestore.rules        # segurança por perfil/dono
-│   │   └── indices/firestore.indexes.json
-│   ├── funcoes/              # Cloud Functions (opcional, Blaze)
-│   └── scripts/              # dados de teste
-│
-├── firebase.json             # deploy (Firestore + Hosting)
-└── .firebaserc
+|-- backend/
+|   |-- firebase/
+|   |   |-- regras/firestore.rules
+|   |   `-- indices/firestore.indexes.json
+|   |-- funcoes/
+|   `-- scripts/
+|-- frontend/
+|   |-- public/
+|   `-- src/
+|       |-- componentes/
+|       |   |-- baseconhecimento/
+|       |   |-- chamados/
+|       |   |-- comuns/
+|       |   |-- layout/
+|       |   |-- painel/
+|       |   `-- relatorios/
+|       |-- composables/
+|       |-- constantes/
+|       |-- estilos/
+|       |-- firebase/
+|       |-- paginas/
+|       |-- rotas/
+|       |-- servicos/
+|       |-- stores/
+|       `-- utils/
+|-- firebase.json
+|-- .firebaserc
+`-- README.md
 ```
 
-> A comunicação com o Firebase fica isolada em `servicos/`; as telas usam `composables/` e `stores/`. Nada de chamada direta ao Firebase espalhada pelos componentes.
+## Modelo de dados
 
----
+Principais colecoes do Cloud Firestore:
 
-## 🗃️ Modelo de dados (Firestore)
-
-**`users/{uid}`**
 ```txt
-uid, name, email, role: "requester" | "support",
-department, active, createdAt, updatedAt
+users/{uid}
 ```
 
-**`tickets/{ticketId}`**
+Perfil do usuario autenticado.
+
+Campos principais: `uid`, `name`, `email`, `role`, `department`, `active`,
+`createdAt`, `updatedAt`.
+
 ```txt
-id, title, description, category,
-priority: "low" | "medium" | "high" | "urgent",
-status:   "open" | "in_progress" | "waiting_requester" | "resolved" | "cancelled",
-location, requesterId, requesterName, requesterEmail,
-assignedToId, assignedToName, supportResponse, resolution,
-createdAt, updatedAt, resolvedAt, cancelledAt
+sessoes/{codigo}
 ```
 
----
+Sessao criada pelo suporte para vincular solicitantes aos atendimentos.
 
-## 🚀 Como rodar
+Campos principais: `codigo`, `suporteId`, `suporteNome`, `ativo`, `criadoEm`.
 
-### Pré-requisitos
-- Node.js 18+
-- Projeto Firebase com **Authentication (E-mail/Senha)** e **Cloud Firestore (Native mode)** ativados
+```txt
+tickets/{ticketId}
+```
 
-### Front-end
+Chamado aberto por um solicitante e vinculado a uma sessao de suporte.
+
+Campos principais: `title`, `description`, `category`, `priority`, `status`,
+`location`, `requesterId`, `sessionId`, `sessionSupportId`, `assignedToId`,
+`supportResponse`, `resolution`, `createdAt`, `updatedAt`.
+
+Subcolecoes:
+
+- `tickets/{ticketId}/mensagens`: mensagens imutaveis do chat.
+- `tickets/{ticketId}/historico`: eventos de auditoria do chamado.
+
+```txt
+articles/{articleId}
+```
+
+Artigos da Base de Conhecimento.
+
+Campos principais: `title`, `body`, `category`, `authorId`, `authorName`,
+`createdAt`, `updatedAt`.
+
+## Seguranca
+
+A seguranca foi implementada em duas camadas:
+
+1. Front-end: guards de rota validam usuario logado, perfil e sessao ativa.
+2. Firestore Rules: impedem acesso fora do escopo permitido para cada perfil.
+
+Regras principais:
+
+- Solicitante acessa apenas seus dados e seus chamados.
+- Suporte acessa apenas chamados vinculados as suas sessoes.
+- Mensagens de chat sao imutaveis depois de criadas.
+- Artigos podem ser lidos por usuarios autenticados.
+- Apenas suporte cria artigos.
+- Apenas o autor do artigo pode editar ou excluir.
+- Operacoes nao previstas sao bloqueadas por padrao.
+
+A configuracao Web do Firebase fica em
+`frontend/src/firebase/configuracaoFirebase.js`. Em aplicacoes Web Firebase, a
+`apiKey` do SDK cliente nao e tratada como segredo; a protecao real depende das
+regras do Firestore, Authentication e restricoes configuradas no Google Cloud.
+
+## Como rodar localmente
+
+Pre-requisitos:
+
+- Node.js 18 ou superior.
+- Projeto Firebase com Authentication por e-mail/senha ativado.
+- Cloud Firestore criado em modo Native.
+
+Instalacao e execucao:
+
 ```bash
 cd frontend
 npm install
-npm run dev      # http://localhost:5173
+npm run dev
 ```
 
-### Configuração do Firebase
-As credenciais Web ficam em `frontend/src/firebase/configuracaoFirebase.js`. As chaves do SDK Web do Firebase são públicas por design (vão embutidas no bundle do cliente) — a segurança real é garantida pelas **Firestore Rules** e pelo **Authentication**, não pelo segredo da chave. Para usar seu próprio projeto, basta substituir o objeto `firebaseConfig`.
+Aplicacao local:
 
-### Deploy
+```txt
+http://localhost:5173
+```
+
+## Scripts
+
+Execute os comandos a partir da pasta `frontend/`:
+
 ```bash
-# Build do front
-cd frontend && npm run build && cd ..
+npm run dev       # servidor de desenvolvimento
+npm run build     # build de producao
+npm run preview   # preview local do build
+npm run test:run  # testes unitarios
+```
 
-# Regras + índices do Firestore
+## Deploy
+
+Na raiz do projeto:
+
+```bash
+cd frontend
+npm run build
+cd ..
 firebase deploy --only firestore
-
-# Hosting
 firebase deploy --only hosting
 ```
 
----
+O arquivo `firebase.json` esta configurado para publicar o Hosting a partir de
+`frontend/dist` e manter o deploy de Firestore separado.
 
-## 🔐 Segurança
+## Status da entrega
 
-A proteção atua em **duas camadas**:
-1. **Front-end** — guards de rota (auth + perfil) e exibição de ações conforme o papel.
-2. **Firestore Rules** — usuário lê só o próprio doc em `users`; solicitante cria/lê/edita/exclui apenas chamados próprios e abertos; suporte lê todos e atualiza status/resposta/solução/responsável.
+- Autenticacao com e-mail e senha.
+- Controle de perfil solicitante/suporte.
+- CRUD de chamados.
+- Chat por chamado.
+- Notificacoes por perfil.
+- Base de Conhecimento.
+- Relatorios do suporte.
+- Firestore Rules e indices configurados.
+- Deploy no Firebase Hosting.
 
-> Persistência de sessão **por aba** (`sessionStorage`): permite logar suporte numa aba e solicitante em outra, no mesmo navegador.
+## Autor
 
----
+Marcos Roberto - [@MaxRbrt](https://github.com/MaxRbrt)
 
-## 📜 Scripts úteis
-
-```bash
-npm run dev        # servidor de desenvolvimento (frontend)
-npm run build      # build de produção
-npm run preview    # pré-visualiza o build
-firebase use       # mostra o projeto Firebase ativo
-```
-
----
-
-## 🗺️ Melhorias futuras
-
-- Histórico completo de alterações por chamado
-- Comentários entre solicitante e suporte
-- Anexos, recuperação de senha, relatórios e gráficos
-- Avaliação do atendimento e busca por palavra-chave
-
----
-
-## 👤 Autor
-
-**Marcos Roberto** — [@MaxRbrt](https://github.com/MaxRbrt)
-
-Projeto acadêmico — TicketFlow.
+Projeto academico - TicketFlow.

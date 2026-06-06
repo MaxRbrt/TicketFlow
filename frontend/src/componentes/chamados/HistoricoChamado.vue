@@ -187,16 +187,20 @@ onUnmounted(parar);
 
 .hist-conteudo {
   display: flex;
+  min-width: 0;
   flex-direction: column;
   gap: 2px;
   padding-top: 3px;
+  overflow-wrap: anywhere;
 }
 
 .hist-titulo {
   font-weight: var(--peso-semibold);
+  overflow-wrap: anywhere;
 }
 
 .hist-meta {
   font-size: var(--fonte-pequena);
+  overflow-wrap: anywhere;
 }
 </style>

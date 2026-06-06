@@ -190,6 +190,49 @@ service cloud.firestore {
       ]);
     }
 
+    function camposArtigoObrigatorios() {
+      return request.resource.data.keys().hasAll([
+        'id',
+        'title',
+        'body',
+        'category',
+        'authorId',
+        'authorName',
+        'createdAt',
+        'updatedAt'
+      ]);
+    }
+
+    function camposArtigoPermitidos() {
+      return request.resource.data.keys().hasOnly([
+        'id',
+        'title',
+        'body',
+        'category',
+        'authorId',
+        'authorName',
+        'createdAt',
+        'updatedAt'
+      ]);
+    }
+
+    function artigoValido(artigoId) {
+      return camposArtigoObrigatorios()
+        && camposArtigoPermitidos()
+        && request.resource.data.id == artigoId
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 160
+        && request.resource.data.body is string
+        && request.resource.data.body.size() > 0
+        && request.resource.data.body.size() <= 20000
+        && request.resource.data.category is string
+        && request.resource.data.authorId is string
+        && request.resource.data.authorName is string
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
     match /users/{userId} {
       allow read: if eDono(userId) || eSuporte();
 
@@ -371,6 +414,35 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ativo']);
 
       allow delete: if false;
+    }
+
+    // Base de Conhecimento: artigos de autoatendimento. Leitura liberada a
+    // qualquer usuario autenticado (central de ajuda compartilhada). Escrita
+    // restrita ao suporte; edicao e exclusao apenas pelo proprio autor.
+    match /articles/{articleId} {
+      allow read: if estaLogado();
+
+      allow create: if eSuporte()
+        && artigoValido(articleId)
+        && request.resource.data.authorId == request.auth.uid;
+
+      // So o autor edita; id, autor e data de criacao sao imutaveis. Apenas
+      // titulo/corpo/categoria/updatedAt podem mudar.
+      allow update: if eSuporte()
+        && artigoValido(articleId)
+        && resource.data.authorId == request.auth.uid
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.authorId == resource.data.authorId
+        && request.resource.data.authorName == resource.data.authorName
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'title',
+          'body',
+          'category',
+          'updatedAt'
+        ]);
+
+      allow delete: if eSuporte() && resource.data.authorId == request.auth.uid;
     }
 
     match /{document=**} {

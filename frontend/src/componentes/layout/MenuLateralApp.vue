@@ -63,6 +63,7 @@ import {
   Users,
   UserRound,
   BarChart3,
+  BookOpen,
   LogOut,
 } from "@lucide/vue";
 import { useAutenticacao } from "../../composables/useAutenticacao.js";
@@ -78,6 +79,7 @@ const MENU_SOLICITANTE = [
   { rota: "/solicitante/painel", rotulo: "Painel", icone: LayoutDashboard },
   { rota: "/solicitante/chamados", rotulo: "Meus Chamados", icone: Ticket },
   { rota: "/solicitante/chamados/novo", rotulo: "Novo Chamado", icone: TicketPlus },
+  { rota: "/base-conhecimento", rotulo: "Ajuda", icone: BookOpen },
   { rota: "/perfil", rotulo: "Perfil", icone: UserRound },
 ];
 
@@ -88,6 +90,7 @@ const MENU_SUPORTE = [
   { rota: "/suporte/chamados/urgentes", rotulo: "Urgentes", icone: Zap },
   { rota: "/suporte/solicitantes", rotulo: "Solicitantes", icone: Users },
   { rota: "/suporte/relatorios", rotulo: "Relatorios", icone: BarChart3 },
+  { rota: "/base-conhecimento", rotulo: "Base de Conhecimento", icone: BookOpen },
   { rota: "/perfil", rotulo: "Perfil", icone: UserRound },
 ];
 
