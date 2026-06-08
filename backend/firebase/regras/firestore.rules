@@ -234,7 +234,9 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if eDono(userId) || eSuporte();
+      // Cada usuario le apenas o proprio perfil. O suporte nao precisa ler
+      // perfis alheios: recebe requesterName/requesterEmail no proprio ticket.
+      allow read: if eDono(userId);
 
       allow create: if eDono(userId)
         && usuarioValido(userId)
@@ -266,7 +268,8 @@ service cloud.firestore {
       allow read: if (eSuporte() && resource.data.sessionSupportId == request.auth.uid)
         || (estaLogado() && resource.data.requesterId == request.auth.uid);
 
-      allow create: if estaLogado()
+      allow create: if temPerfilAtivo()
+        && perfilDoUsuario().role == 'requester'
         && ticketBaseValido(ticketId)
         && request.resource.data.requesterId == request.auth.uid
         && request.resource.data.requesterEmail == request.auth.token.email
@@ -297,6 +300,7 @@ service cloud.firestore {
         && camposEditaveisPeloSolicitante();
 
       allow update: if eSuporte()
+        && resource.data.sessionSupportId == request.auth.uid
         && ticketBaseValido(ticketId)
         && request.resource.data.requesterId == resource.data.requesterId
         && request.resource.data.requesterEmail == resource.data.requesterEmail
@@ -405,6 +409,8 @@ service cloud.firestore {
         && request.resource.data.codigo == codigo
         && request.resource.data.suporteId == request.auth.uid
         && request.resource.data.suporteNome is string
+        && request.resource.data.suporteNome.size() > 0
+        && request.resource.data.suporteNome.size() <= 120
         && request.resource.data.ativo == true
         && request.resource.data.criadoEm is timestamp;
 
