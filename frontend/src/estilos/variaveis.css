@@ -2,7 +2,7 @@
    TicketFlow - Tokens de design (variaveis CSS)
    --------------------------------------------------------------------------
    TEMA: "Twilight" - dark glassmorphism com acento ciano e glow sutil.
-   Referencia: TelaClaude.png (command-center), em versao escura confortavel.
+   Referencia: command-center, em versao escura confortavel.
 
    Fonte unica de verdade do visual. Os nomes dos tokens sao estaveis: as
    constantes JS e os componentes dependem deles (ex.: var(--cor-status-aberto)).
